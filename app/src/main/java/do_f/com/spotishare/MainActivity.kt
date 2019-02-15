@@ -1,0 +1,259 @@
+package do_f.com.spotishare
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.support.v7.app.AppCompatActivity
+import com.spotify.sdk.android.authentication.AuthenticationClient
+import com.spotify.sdk.android.authentication.AuthenticationResponse
+import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.PixelFormat
+import android.os.*
+import android.preference.PreferenceManager
+import android.support.v4.content.LocalBroadcastManager
+import android.util.Log
+import android.widget.Toast
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.firebase.iid.FirebaseInstanceId
+
+import com.spotify.android.appremote.api.ConnectionParams
+import com.spotify.android.appremote.api.Connector
+import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.types.PlayerState
+import com.spotify.sdk.android.authentication.AuthenticationRequest
+import do_f.com.spotishare.api.SpotifyClient
+import do_f.com.spotishare.base.BFragment
+import do_f.com.spotishare.fragment.HomeFragment
+import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
+
+class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private val TAG = "MainActivity";
+        val CLIENT_ID = "***REMOVED***";
+        val REQUEST_CODE = 1337
+        val REDIRECT_URI = "***REMOVED***"
+        val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
+        val  FCM_INTENT_FILTER = "fcm_service_intent_filter"
+    }
+
+    private var mCountDownTimer : CountDownTimer? = null
+    private var mSpotifyAppRemote : SpotifyAppRemote? = null
+    private val mHandler = Handler(Looper.getMainLooper())
+    private var mFCMToken = "";
+
+
+    private val mBroadcastReceiver : BroadcastReceiver = object  : BroadcastReceiver() {
+        override fun onReceive(c: Context?, intent: Intent?) {
+
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+//        FirebaseMessaging.getInstance().subscribeToTopic("weather")
+//            .addOnCompleteListener { task ->
+//                var msg = "OK"
+//                if (!task.isSuccessful) {
+//                    msg = "fail";
+//                }
+//
+//                Log.d(TAG, msg)
+//                Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+//        }
+
+        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
+            if (!it.isSuccessful) {
+                Log.w(TAG, "getInstanceId failed", it.exception)
+                return@addOnCompleteListener
+            }
+
+            // Get new Instance ID token
+            val token = it.result?.token
+
+            // Log and toast
+            Log.d(TAG, token)
+            mFCMToken = token!!
+            Toast.makeText(baseContext, token, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, intent)
+
+        if (requestCode == MainActivity.REQUEST_CODE) {
+            val response = AuthenticationClient.getResponse(resultCode, intent)
+
+            when (response.type) {
+                // Response was successful and contains auth token
+                AuthenticationResponse.Type.TOKEN -> {
+                    App.mRefreshStrategy.refresh(SpotifyClient::class.java)
+                    PreferenceManager
+                        .getDefaultSharedPreferences(applicationContext)
+                        .edit()
+                        .putString(SpotifyClient.SP_TOKEN, response.accessToken)
+                        .apply()
+
+                    App.mSpotifyClient.mAccessToken = response.accessToken
+
+                    Log.d(TAG, " ${response.accessToken}")
+                    Log.d(TAG, " ${response.code}")
+                    Log.d(TAG, " ${response.expiresIn}")
+                    Log.d(TAG, " ${response.state}")
+                }
+
+                // Auth flow returned an error
+                AuthenticationResponse.Type.ERROR -> {
+                    Log.d(TAG, ": AuthenticationResponse.Type.ERROR")
+                }
+            }
+        }
+    }
+
+    private fun initPlayer(spotifyAppRemote: SpotifyAppRemote, it: PlayerState) {
+        spotifyAppRemote.apply {
+            currentSong.text = it.track.name+" • "+it.track.artist.name
+
+            mHandler.post {
+                song_progression.max = it.track.duration.toInt()
+                song_progression.progress = it.playbackPosition.toInt()
+            }
+
+            if (!it.isPaused)
+                launchTrackProgression(it.playbackPosition, it.track.duration)
+        }
+    }
+
+    private fun launchTrackProgression(position : Long, songDuration : Long) {
+        if (mCountDownTimer != null) {
+            mCountDownTimer!!.cancel()
+        }
+
+        mCountDownTimer = object : CountDownTimer(songDuration - position, 500) {
+            override fun onFinish() {
+
+            }
+
+            override fun onTick(p0: Long) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    song_progression.setProgress(songDuration.toInt() - p0.toInt(), false)
+                } else {
+                    song_progression.progress = songDuration.toInt() - p0.toInt()
+                }
+            }
+        }
+        mCountDownTimer!!.start();
+    }
+
+    private fun spotifyAppRemoteConnect() {
+        mSpotifyAppRemote?.apply {
+            playerApi.subscribeToPlayerState().setEventCallback {
+                initPlayer(this, it)
+
+                val track = it.track
+                val bmp = mSpotifyAppRemote?.imagesApi?.getImage(track.imageUri)
+                bmp?.setResultCallback {
+                    val bmpTmp = it
+                    val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+                    navHost?.let {
+                        it.childFragmentManager.primaryNavigationFragment?.let {
+                            val f = it as HomeFragment
+                            f.setImage(bmpTmp)
+                        }
+                    }
+                }
+                Log.d(TAG, " ${track.album.name}")
+            }
+        }
+
+        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+        navHost?.childFragmentManager?.primaryNavigationFragment?.let {
+            if (it is BFragment) {
+                it.initSpotifyAppRemote()
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val connectionParams = ConnectionParams.Builder(CLIENT_ID)
+            .setRedirectUri(REDIRECT_URI)
+            .showAuthView(true)
+            .build()
+
+        SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
+            override fun onFailure(p0: Throwable?) {
+                Log.e(TAG, "error ", p0)
+            }
+
+            override fun onConnected(p0: SpotifyAppRemote?) {
+                mSpotifyAppRemote = p0
+                spotifyAppRemoteConnect()
+            }
+        })
+
+        // Register LocalBroadcast
+        LocalBroadcastManager
+            .getInstance(this)
+            .registerReceiver(mBroadcastReceiver, IntentFilter(FCM_INTENT_FILTER))
+    }
+
+    override fun onStop() {
+        super.onStop()
+        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+        mSpotifyAppRemote = null
+
+        // unregister LocalBroadcast
+        LocalBroadcastManager
+            .getInstance(this)
+            .unregisterReceiver(mBroadcastReceiver)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (App.mRefreshStrategy.shouldRefresh(SpotifyClient::class.java))
+            refreshSpotifyToken()
+        else {
+            Log.d(TAG, "onResume: getToken from SP")
+            App.mSpotifyClient.mAccessToken = PreferenceManager
+                .getDefaultSharedPreferences(applicationContext)
+                .getString(SpotifyClient.SP_TOKEN, "")!!
+        }
+    }
+
+    private fun refreshSpotifyToken() {
+        Log.d(TAG, "Refresh Token")
+        val builder = AuthenticationRequest.Builder(
+            MainActivity.CLIENT_ID, AuthenticationResponse.Type.TOKEN,
+            MainActivity.REDIRECT_URI
+        )
+
+        builder.setScopes(arrayOf("streaming", "user-read-currently-playing", "user-read-playback-state"))
+        val request = builder.build()
+
+        AuthenticationClient.openLoginActivity(this, MainActivity.REQUEST_CODE, request)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        val window = window
+        window.setFormat(PixelFormat.RGBA_8888)
+    }
+
+    fun getSpotifyAppRemote() : SpotifyAppRemote? {
+        return mSpotifyAppRemote;
+    }
+
+    private fun getAccessToken(callback : (String) -> Unit) {
+        AsyncTask.execute {
+            val googleCredential = GoogleCredential
+                .fromStream(resources.openRawResource(R.raw.***REMOVED***))
+                .createScoped(Arrays.asList(MESSAGING_SCOPE))
+            googleCredential.refreshToken()
+            callback.invoke(googleCredential.getAccessToken())
+        }
+    }
+}
