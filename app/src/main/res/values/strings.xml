@@ -11,4 +11,6 @@
     <string name="label_search">Search</string>
     <string name="search_text">Search Spotify</string>
     <string name="search_text_caption">Find your favorite music and artists</string>
+
+    <string name="search_adapter_type_track">Song • %s</string>
 </resources>
