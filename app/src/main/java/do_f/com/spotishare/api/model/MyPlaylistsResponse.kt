@@ -19,6 +19,8 @@ data class Item(
     val explicit: Boolean,
     val external_ids: ExternalIds,
     val external_urls: ExternalUrls,
+    val followers: Followers,
+    val genres: List<Any>,
     val href: String,
     val id: String,
     val is_local: Boolean,
