@@ -6,7 +6,8 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SearchFragment">
+    android:background="@color/background"
+    tools:context=".fragment.SearchFragment">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/search_content"
@@ -60,6 +61,9 @@
             android:background="@null"
             android:textCursorDrawable="@drawable/cursor_color"
             android:textColor="@color/white"
+            android:inputType="text"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/search_arrow"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -67,19 +71,39 @@
 
     </android.support.constraint.ConstraintLayout>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/rvFeed"
+    <!--<android.support.v7.widget.RecyclerView-->
+        <!--android:id="@+id/rvFeed"-->
+        <!--android:layout_width="0dp"-->
+        <!--android:layout_height="0dp"-->
+        <!--android:scrollbars="none"-->
+        <!--android:layout_marginStart="8dp"-->
+        <!--android:layout_marginTop="8dp"-->
+        <!--android:layout_marginEnd="8dp"-->
+        <!--android:layout_marginBottom="8dp"-->
+        <!--app:layout_constraintEnd_toEndOf="parent"-->
+        <!--app:layout_constraintStart_toStartOf="parent"-->
+        <!--app:layout_constraintTop_toBottomOf="@+id/search_content"-->
+        <!--app:layout_constraintBottom_toBottomOf="parent"-->
+        <!--tools:listitem="@layout/adapter_search"/>-->
+
+    <android.support.v4.widget.NestedScrollView
+        android:id="@+id/scrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:scrollbars="none"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/search_content"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rvFeed"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none"
+            android:background="@color/background"
+            tools:listitem="@layout/adapter_search"/>
+
+    </android.support.v4.widget.NestedScrollView>
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/no_content"

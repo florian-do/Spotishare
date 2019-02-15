@@ -4,7 +4,7 @@ import do_f.com.spotishare.api.model.MyPlaylistsResponse
 import retrofit2.Call
 import retrofit2.http.GET
 
-interface Playlists {
+interface PlaylistsService {
 
     @GET("me/playlists")
     fun getMyPlaylists() : Call<MyPlaylistsResponse>
