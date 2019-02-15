@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Spotishare</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="home_create_room">Create</string>
+    <string name="home_join_room">Join</string>
+
+    <string name="search_hint">Artists, songs</string>
+    <string name="label_search">Search</string>
+    <string name="search_text">Search Spotify</string>
+    <string name="search_text_caption">Find your favorite music and artists</string>
+</resources>
