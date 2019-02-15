@@ -5,21 +5,21 @@ import android.arch.lifecycle.MutableLiveData
 import android.util.Log
 import do_f.com.spotishare.App
 import do_f.com.spotishare.api.model.MyPlaylistsResponse
-import do_f.com.spotishare.api.service.Playlists
+import do_f.com.spotishare.api.service.PlaylistsService
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class PlaylistsRepository {
+class PlaylistsRepo {
 
     companion object {
-        val TAG = "PlaylistsRepository"
+        val TAG = "PlaylistsRepo"
     }
 
-    val api : Playlists
+    val api : PlaylistsService
 
     init {
-        api = App.retrofit.create(Playlists::class.java)
+        api = App.retrofit.create(PlaylistsService::class.java)
     }
 
     fun getPlaylists() : LiveData<MyPlaylistsResponse> {
