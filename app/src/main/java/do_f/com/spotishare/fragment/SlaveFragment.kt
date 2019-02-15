@@ -22,9 +22,8 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.TransitionDrawable
 import android.support.v7.widget.GridLayoutManager
 import androidx.navigation.Navigation
-import androidx.navigation.fragment.NavHostFragment
 import do_f.com.spotishare.adapters.PlaylistsAdapter
-import do_f.com.spotishare.api.repository.PlaylistsRepository
+import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
 import java.util.*
 
@@ -64,7 +63,7 @@ class SlaveFragment : BFragment() {
         initSpotifyData()
 
         val adapter = PlaylistsAdapter(context!!)
-        val repo = PlaylistsRepository()
+        val repo = PlaylistsRepo()
 
         rvPlaylist.adapter = adapter
         rvPlaylist.layoutManager = GridLayoutManager(context, 2, GridLayoutManager.VERTICAL, false)

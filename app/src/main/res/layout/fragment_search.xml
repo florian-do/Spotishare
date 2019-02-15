@@ -6,7 +6,7 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SearchFragment">
+    tools:context=".fragment.SearchFragment">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/search_content"
@@ -63,6 +63,9 @@
             android:visibility="gone"
             android:textCursorDrawable="@drawable/cursor_color"
             android:textColor="@color/white"
+            android:inputType="text"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/search_arrow"
             app:layout_constraintBottom_toBottomOf="parent"
