@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#000000</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#D81B60</color>
+
+    <color name="background">#191414</color>
+    <color name="background_player">#222326</color>
+    <color name="white">#FFFFFF</color>
+    <color name="green_spotify">#1db954</color>
+    <color name="search_grey">#424445</color>
+</resources>
