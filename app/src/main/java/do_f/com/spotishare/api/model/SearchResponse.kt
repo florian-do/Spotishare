@@ -2,10 +2,21 @@ package do_f.com.spotishare.api.model
 
 data class SearchResponse(
     val artists: Artists,
-    val tracks: Tracks
+    val tracks: Tracks,
+    val playlists: Playlists
 )
 
 data class Tracks(
+    val href: String,
+    val items: List<Item>,
+    val limit: Int,
+    val next: String,
+    val offset: Int,
+    val previous: Any,
+    val total: Int
+)
+
+data class Playlists(
     val href: String,
     val items: List<Item>,
     val limit: Int,
@@ -46,25 +57,12 @@ data class ExternalIds(
 
 data class Artists(
     val href: String,
-    val items: List<ItemX>,
+    val items: List<Item>,
     val limit: Int,
     val next: String,
     val offset: Int,
     val previous: Any,
     val total: Int
-)
-
-data class ItemX(
-    val external_urls: ExternalUrls,
-    val followers: Followers,
-    val genres: List<Any>,
-    val href: String,
-    val id: String,
-    val images: List<Image>,
-    val name: String,
-    val popularity: Int,
-    val type: String,
-    val uri: String
 )
 
 data class Followers(
