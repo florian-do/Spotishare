@@ -22,6 +22,7 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.TransitionDrawable
 import android.support.v7.widget.GridLayoutManager
 import androidx.navigation.Navigation
+import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.PlaylistsAdapter
 import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
@@ -93,7 +94,7 @@ class SlaveFragment : BFragment() {
         getSpotifyAppRemote().apply {
             playerApi.subscribeToPlayerState().setEventCallback {
                 imagesApi.getImage(it.track.imageUri).setResultCallback {
-                    val domColor = getDominantColor(it)
+                    val domColor = Utils.manipulateColor(Utils.getDominantColor(it), 0.8F)
                     val backgroundColor = resources.getColor(R.color.background)
                     val colors = intArrayOf(domColor, backgroundColor, backgroundColor)
 
@@ -112,18 +113,6 @@ class SlaveFragment : BFragment() {
                 }
             }
         }
-    }
-
-    // https://gist.github.com/KKorvin/219555d4d3ee1828d7b0e808aad82930
-    fun getDominantColor(bitmap: Bitmap): Int {
-        val swatchesTemp = Palette.from(bitmap).generate().swatches
-        val swatches = ArrayList(swatchesTemp)
-        Collections.sort(swatches, object : Comparator<Palette.Swatch> {
-            override fun compare(swatch1: Palette.Swatch, swatch2: Palette.Swatch): Int {
-                return swatch2.population - swatch1.population
-            }
-        })
-        return if (swatches.size > 0) swatches[0].rgb else 0
     }
 
     override fun onPause() {
