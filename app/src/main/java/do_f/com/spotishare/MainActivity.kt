@@ -75,9 +75,8 @@ class MainActivity : AppCompatActivity() {
             val token = it.result?.token
 
             // Log and toast
-            Log.d(TAG, token)
             mFCMToken = token!!
-            Toast.makeText(baseContext, token, Toast.LENGTH_SHORT).show()
+//            Toast.makeText(baseContext, token, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -203,7 +202,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+        SpotifyAppRemote.disconnect(mSpotifyAppRemote)
         mSpotifyAppRemote = null
 
         // unregister LocalBroadcast
@@ -217,10 +216,10 @@ class MainActivity : AppCompatActivity() {
         if (App.mRefreshStrategy.shouldRefresh(SpotifyClient::class.java))
             refreshSpotifyToken()
         else {
-            Log.d(TAG, "onResume: getToken from SP")
             App.mSpotifyClient.mAccessToken = PreferenceManager
                 .getDefaultSharedPreferences(applicationContext)
                 .getString(SpotifyClient.SP_TOKEN, "")!!
+            Log.d(TAG, "onResume: getToken from SP : ${App.mSpotifyClient.mAccessToken}")
         }
     }
 
@@ -244,7 +243,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun getSpotifyAppRemote() : SpotifyAppRemote? {
-        return mSpotifyAppRemote;
+        return mSpotifyAppRemote
     }
 
     private fun getAccessToken(callback : (String) -> Unit) {
