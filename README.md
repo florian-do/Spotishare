@@ -1,6 +1,8 @@
 # Spotishare
 A collaborative listening room using Spotify
 
+![alt text](https://github.com/florian-do/Spotishare/blob/master/app/src/main/ic_launcher-web.png)
+
 ## Built With
 
 * [Kotlin](https://kotlinlang.org/) - 
