@@ -1,8 +1,10 @@
 package do_f.com.spotishare.api.model
 
+import do_f.com.spotishare.databases.entities.Playlists
+
 data class MyPlaylistsResponse(
     val href: String,
-    val items: List<Item>,
+    val items: List<Playlists>,
     val limit: Int,
     val next: String,
     val offset: Int,
