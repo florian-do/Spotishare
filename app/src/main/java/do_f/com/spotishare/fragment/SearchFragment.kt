@@ -47,8 +47,6 @@ import kotlinx.android.synthetic.main.fragment_search.*
 
 class SearchFragment : BFragment() {
 
-    private var param1: String? = null
-    private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
 
     private val constraint1 = ConstraintSet()
