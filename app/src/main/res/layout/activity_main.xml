@@ -42,20 +42,71 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <ImageView
+            android:id="@+id/arrow_up"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_arrow_up"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toTopOf="parent"/>
+
         <TextView
             android:id="@+id/currentSong"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textStyle="bold"
+            android:textSize="12sp"
             tools:text="Cinq doigts • Lomepal, Katerine"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/song_progression"
+            app:layout_constraintBottom_toTopOf="@id/user_devices"
             app:layout_constraintEnd_toStartOf="@+id/imageView"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toEndOf="@+id/arrow_up"
+            app:layout_constraintVertical_chainStyle="spread"/>
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/user_devices"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/arrow_up"
+            app:layout_constraintEnd_toStartOf="@+id/imageView"
+            app:layout_constraintTop_toBottomOf="@+id/currentSong"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:id="@+id/ic_device"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_device_speaker"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/user_device"/>
+
+            <TextView
+                android:id="@+id/user_device"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/green_spotify"
+                android:textAllCaps="true"
+                android:text="La douillebar"
+                tools:text="La douillebar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/ic_device"
+                android:layout_marginStart="8dp"/>
+
+        </android.support.constraint.ConstraintLayout>
 
         <ImageView
             android:layout_width="wrap_content"
