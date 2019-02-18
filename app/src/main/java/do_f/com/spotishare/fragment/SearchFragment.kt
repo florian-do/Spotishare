@@ -15,7 +15,6 @@ import android.support.annotation.LayoutRes
 import android.support.constraint.ConstraintSet
 import android.support.transition.ChangeBounds
 import android.support.transition.TransitionManager
-import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.KeyEvent
@@ -28,25 +27,25 @@ import android.view.animation.OvershootInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.target.Target
+
 import do_f.com.spotishare.R
 import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.SearchAdapter
 import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.SearchResponse
+import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.databinding.FragmentSearchBinding
 import do_f.com.spotishare.view.MyEditText
 import do_f.com.spotishare.viewmodel.SearchViewModel
 import kotlinx.android.synthetic.main.fragment_search.*
-import kotlinx.android.synthetic.main.fragment_slave.*
 
-class SearchFragment : Fragment() {
+class SearchFragment : BFragment() {
 
     private var param1: String? = null
     private var param2: String? = null
@@ -63,17 +62,7 @@ class SearchFragment : Fragment() {
     private val mHandler = Handler(Looper.getMainLooper())
 
     companion object {
-        private const val ARG_PARAM1 = "param1"
-        private const val ARG_PARAM2 = "param2"
         private const val TAG = "SearchFragment"
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -81,7 +70,6 @@ class SearchFragment : Fragment() {
 
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_search, container, false)
         searchViewModel = ViewModelProviders.of(this).get(SearchViewModel::class.java)
-        adapter = SearchAdapter(Glide.with(this.context!!))
 
         return binding.root
     }
@@ -102,6 +90,10 @@ class SearchFragment : Fragment() {
         search_arrow.setOnClickListener {
             fragmentManager?.popBackStack()
         }
+
+        adapter = SearchAdapter(Glide.with(this.context!!), listener = {
+            getSpotifyAppRemote().playerApi.play(it.uri)
+        })
 
         rvFeed.layoutManager = LinearLayoutManager(context)
         rvFeed.setHasFixedSize(true)
@@ -259,5 +251,9 @@ class SearchFragment : Fragment() {
     interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
+    }
+
+    override fun refreshSpotifyAppRemote() {
+
     }
 }
