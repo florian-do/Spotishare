@@ -3,12 +3,12 @@ package do_f.com.spotishare.adapters
 import android.content.Context
 import android.databinding.DataBindingUtil
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import do_f.com.spotishare.R
 import do_f.com.spotishare.api.model.Item
+import do_f.com.spotishare.databases.entities.Playlists
 import do_f.com.spotishare.databinding.AdapterPlaylistBinding
 
 class PlaylistsAdapter(val context: Context) : RecyclerView.Adapter<PlaylistsAdapter.ViewHolder>() {
@@ -17,7 +17,7 @@ class PlaylistsAdapter(val context: Context) : RecyclerView.Adapter<PlaylistsAda
         val TAG = "PlaylistsAdapter"
     }
 
-    var items : List<Item> = emptyList()
+    var items : List<Playlists> = emptyList()
 
     override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ViewHolder {
         val binding : AdapterPlaylistBinding = DataBindingUtil.inflate(
