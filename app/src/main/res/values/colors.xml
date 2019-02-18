@@ -9,4 +9,5 @@
     <color name="white">#FFFFFF</color>
     <color name="green_spotify">#1db954</color>
     <color name="search_grey">#424445</color>
+    <color name="search_grey_t">#AA424445</color>
 </resources>
