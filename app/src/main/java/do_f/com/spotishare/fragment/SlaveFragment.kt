@@ -26,6 +26,7 @@ import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.PlaylistsAdapter
 import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
+import kotlinx.android.synthetic.main.fragment_search.*
 import java.util.*
 
 
@@ -57,6 +58,8 @@ class SlaveFragment : BFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
+        main.alpha = 0F
+
         initPlaylistFeed()
         initSpotifyData()
 
@@ -81,7 +84,8 @@ class SlaveFragment : BFragment() {
             if (it == null) {
                 repo.refresh()
             } else {
-                it?.apply {
+                it.apply {
+                    dataSuccessfullyLoad()
                     adapter.items = this
                     adapter.notifyDataSetChanged()
                 }
@@ -89,6 +93,10 @@ class SlaveFragment : BFragment() {
                 repo.refresh()
             }
         })
+    }
+
+    fun dataSuccessfullyLoad() {
+        main.animate().alpha(1F).setDuration(600L).start()
     }
 
     override fun refreshSpotifyAppRemote() {

@@ -13,7 +13,7 @@ import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.SearchResponse
 import do_f.com.spotishare.databinding.AdapterSearchBinding
 
-class SearchAdapter(val glide: RequestManager) : RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
+class SearchAdapter(val glide: RequestManager, val listener: (song : Item) -> Unit) : RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
 
     var items : List<Item> = emptyList()
 
@@ -43,6 +43,10 @@ class SearchAdapter(val glide: RequestManager) : RecyclerView.Adapter<SearchAdap
 
     override fun onBindViewHolder(holder: ViewHolder, p1: Int) {
         val data : Item = items[p1]
+
+        holder.binding.root.setOnClickListener {
+            listener.invoke(data)
+        }
 
         when(data.type) {
             TYPE_ARTIST -> {
