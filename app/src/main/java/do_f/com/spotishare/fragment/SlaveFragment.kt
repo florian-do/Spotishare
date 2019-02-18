@@ -26,6 +26,7 @@ import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.PlaylistsAdapter
 import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
+import kotlinx.android.synthetic.main.fragment_search.*
 import java.util.*
 
 
@@ -49,6 +50,7 @@ class SlaveFragment : BFragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View? {
+        Log.d(TAG, "onCreateView: ")
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_slave, container, false)
     }
@@ -56,33 +58,45 @@ class SlaveFragment : BFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            main.getLayoutTransition()
-                .enableTransitionType(LayoutTransition.CHANGING);
-        }
+        main.alpha = 0F
 
+        initPlaylistFeed()
         initSpotifyData()
-
-        val adapter = PlaylistsAdapter(context!!)
-        val repo = PlaylistsRepo()
-
-        rvPlaylist.adapter = adapter
-        rvPlaylist.layoutManager = GridLayoutManager(context, 2, GridLayoutManager.VERTICAL, false)
-        rvPlaylist.setHasFixedSize(true)
-        rvPlaylist.isNestedScrollingEnabled = false
-
-        repo.getPlaylists().observe(this, Observer {
-            it?.apply {
-                Log.d(TAG, " size : ${items.size}")
-                adapter.items = items
-                adapter.notifyDataSetChanged()
-            }
-        })
 
         search_bar.setOnClickListener {
             mHandler.removeCallbacksAndMessages(null)
             Navigation.findNavController(it).navigate(R.id.searchFragment)
         }
+    }
+
+    private fun initPlaylistFeed() {
+        val adapter = PlaylistsAdapter(context!!)
+        val repo = PlaylistsRepo()
+
+        rvPlaylist.adapter = adapter
+        rvPlaylist.layoutManager = GridLayoutManager(
+            context, 2, GridLayoutManager.VERTICAL, false)
+        rvPlaylist.setHasFixedSize(true)
+        rvPlaylist.isNestedScrollingEnabled = false
+
+        repo.getPlaylists().observe(this, Observer {
+            Log.d(TAG, "trigger")
+            if (it == null) {
+                repo.refresh()
+            } else {
+                it.apply {
+                    dataSuccessfullyLoad()
+                    adapter.items = this
+                    adapter.notifyDataSetChanged()
+                }
+
+                repo.refresh()
+            }
+        })
+    }
+
+    fun dataSuccessfullyLoad() {
+        main.animate().alpha(1F).setDuration(600L).start()
     }
 
     override fun refreshSpotifyAppRemote() {
