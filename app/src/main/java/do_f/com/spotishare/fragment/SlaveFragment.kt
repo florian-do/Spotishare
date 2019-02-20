@@ -1,9 +1,7 @@
 package do_f.com.spotishare.fragment
 
-import android.animation.LayoutTransition
 import android.arch.lifecycle.Observer
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.*
 import android.util.Log
@@ -17,7 +15,6 @@ import do_f.com.spotishare.R
 import kotlinx.android.synthetic.main.fragment_slave.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
-import android.support.v7.graphics.Palette
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.TransitionDrawable
 import android.support.v7.widget.GridLayoutManager
@@ -26,9 +23,6 @@ import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.PlaylistsAdapter
 import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
-import kotlinx.android.synthetic.main.fragment_search.*
-import java.util.*
-
 
 class SlaveFragment : BFragment() {
 
@@ -57,9 +51,6 @@ class SlaveFragment : BFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
-        main.alpha = 0F
-
         initPlaylistFeed()
         initSpotifyData()
 
