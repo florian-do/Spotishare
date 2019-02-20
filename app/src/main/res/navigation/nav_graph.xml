@@ -51,4 +51,9 @@
         android:name="do_f.com.spotishare.fragment.SearchFragment"
         android:label="fragment_search"
         tools:layout="@layout/fragment_search"/>
+    <fragment
+        android:id="@+id/songsFragment"
+        android:name="do_f.com.spotishare.SongsFragment"
+        android:label="fragment_songs"
+        tools:layout="@layout/fragment_songs"/>
 </navigation>
