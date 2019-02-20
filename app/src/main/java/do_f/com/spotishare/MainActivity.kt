@@ -189,6 +189,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onConnected(p0: SpotifyAppRemote?) {
+                Log.d(TAG, "onConnected")
                 mSpotifyAppRemote = p0
                 spotifyAppRemoteConnect()
             }
