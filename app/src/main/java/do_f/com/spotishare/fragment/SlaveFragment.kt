@@ -51,9 +51,6 @@ class SlaveFragment : BFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
-        main.alpha = 0F
-
         initPlaylistFeed()
         initSpotifyData()
 
