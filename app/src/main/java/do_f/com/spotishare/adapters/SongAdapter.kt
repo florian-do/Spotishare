@@ -35,6 +35,7 @@ class SongAdapter : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
                 .songArtistAlbum
                 .resources
                 .getString(R.string.artist_album, it.artist_name, it.album_name)
+            holder.binding.explicit = it.explicit
         }
     }
 
