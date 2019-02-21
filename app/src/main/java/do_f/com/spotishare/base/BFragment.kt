@@ -20,7 +20,7 @@ abstract class BFragment : Fragment() {
     }
 
     fun dataSuccessfullyLoad(v: View) {
-        v.animate().alpha(1F).setDuration(400L).start()
+        v.animate().alpha(1F).setDuration(400L).setStartDelay(100L).start()
     }
 
     abstract fun refreshSpotifyAppRemote()
