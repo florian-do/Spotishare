@@ -5,7 +5,9 @@ import android.arch.lifecycle.MutableLiveData
 import android.os.AsyncTask
 import android.util.Log
 import do_f.com.spotishare.App
+import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.MyPlaylistsResponse
+import do_f.com.spotishare.api.model.SinglePlaylistResponse
 import do_f.com.spotishare.api.service.PlaylistsService
 import do_f.com.spotishare.databases.PlaylistsDao
 import do_f.com.spotishare.databases.entities.Playlists
@@ -47,5 +49,23 @@ class PlaylistsRepo {
 
     fun getPlaylists() : LiveData<List<Playlists>> {
         return dao.getPlaylists()
+    }
+
+    fun getPlaylistById(id : String) : LiveData<SinglePlaylistResponse> {
+        var data : MutableLiveData<SinglePlaylistResponse>? = MutableLiveData()
+
+        api.getPlaylistById(id).enqueue(object : Callback<SinglePlaylistResponse> {
+            override fun onFailure(call: Call<SinglePlaylistResponse>, t: Throwable) {
+                Log.e(TAG, "error :", t)
+                data = null
+            }
+
+            override fun onResponse(call: Call<SinglePlaylistResponse>, response: Response<SinglePlaylistResponse>) {
+                Log.d(TAG, "onResponse ${response.code()}")
+                data?.value = response.body()
+            }
+        })
+
+        return data!!
     }
 }
