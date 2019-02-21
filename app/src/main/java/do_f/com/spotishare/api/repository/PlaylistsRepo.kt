@@ -5,15 +5,18 @@ import android.arch.lifecycle.MutableLiveData
 import android.os.AsyncTask
 import android.util.Log
 import do_f.com.spotishare.App
-import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.MyPlaylistsResponse
 import do_f.com.spotishare.api.model.SinglePlaylistResponse
 import do_f.com.spotishare.api.service.PlaylistsService
 import do_f.com.spotishare.databases.PlaylistsDao
+import do_f.com.spotishare.databases.entities.Playlist
 import do_f.com.spotishare.databases.entities.Playlists
+import do_f.com.spotishare.databases.entities.Row
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import com.google.gson.Gson
+import java.net.URLEncoder
 
 class PlaylistsRepo {
 
@@ -31,15 +34,13 @@ class PlaylistsRepo {
 
     fun refresh() {
         AsyncTask.execute {
-            Log.d(TAG, "dao == ${dao.count()} || refresh : ${App.mRefreshStrategy.shouldRefresh(this.javaClass)}")
-
-            if (dao.count() == 0 || App.mRefreshStrategy.shouldRefresh(this.javaClass)) {
+            if (dao.count() == 0 || App.mRefreshStrategy.shouldRefresh(Playlists::class.java)) {
                 val response : Response<MyPlaylistsResponse> = api.getMyPlaylists().execute()
                 if (response.isSuccessful) {
                     Log.d(TAG, "success ${response.code()}")
-                    dao.instert(response.body()?.items!!)
 
-                    App.mRefreshStrategy.refresh(this.javaClass)
+                    dao.instert(response.body()?.items!!)
+                    App.mRefreshStrategy.refresh(Playlists::class.java)
                 } else {
                     Log.d(TAG, "Pas success ")
                 }
@@ -51,21 +52,27 @@ class PlaylistsRepo {
         return dao.getPlaylists()
     }
 
-    fun getPlaylistById(id : String) : LiveData<SinglePlaylistResponse> {
-        var data : MutableLiveData<SinglePlaylistResponse>? = MutableLiveData()
+    fun refreshById(id : String) {
+        AsyncTask.execute {
+            if (dao.isPlaylistInDb(id) == 0 || App.mRefreshStrategy.shouldRefresh(Playlist::class.java)) {
+                val field = URLEncoder.encode("items(id,track(name,uri,album.name,artists(name)))")
+                val response : Response<SinglePlaylistResponse> = api.getPlaylistById(id, field).execute()
+                Log.d(TAG, Gson().toJson(response))
+                if (response.isSuccessful) {
+                    Log.d(TAG, "success ${response.code()}")
+                    val items : MutableList<Row> = mutableListOf()
+                    response.body()?.items?.forEach {
+                        items.add(Row(it.track.album.name, it.track.artists[0].name, it.track.name, it.track.uri))
+                    }
 
-        api.getPlaylistById(id).enqueue(object : Callback<SinglePlaylistResponse> {
-            override fun onFailure(call: Call<SinglePlaylistResponse>, t: Throwable) {
-                Log.e(TAG, "error :", t)
-                data = null
+                    dao.instertById(Playlist(id, items))
+                    App.mRefreshStrategy.refresh(Playlist::class.java)
+                } else {
+                    Log.d(TAG, "Pas success ")
+                }
             }
-
-            override fun onResponse(call: Call<SinglePlaylistResponse>, response: Response<SinglePlaylistResponse>) {
-                Log.d(TAG, "onResponse ${response.code()}")
-                data?.value = response.body()
-            }
-        })
-
-        return data!!
+        }
     }
+
+    fun getPlaylistById(id : String) : LiveData<Playlist> = dao.getPlaylistById(id)
 }
