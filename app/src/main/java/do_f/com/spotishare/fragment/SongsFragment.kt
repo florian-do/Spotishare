@@ -17,10 +17,14 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import do_f.com.spotishare.App
 import do_f.com.spotishare.R
 import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.SongAdapter
 import do_f.com.spotishare.base.BFragment
+import do_f.com.spotishare.databases.entities.Album
+import do_f.com.spotishare.databases.entities.Playlist
+import do_f.com.spotishare.databases.entities.Type
 import do_f.com.spotishare.databinding.FragmentSongsBinding
 import do_f.com.spotishare.viewmodel.SongsViewModel
 import kotlinx.android.synthetic.main.fragment_songs.*
@@ -72,18 +76,55 @@ class SongsFragment : BFragment() {
         rvFeed.isNestedScrollingEnabled = false
         rvFeed.layoutManager = LinearLayoutManager(context)
 
-        vm.getPlaylistById(id).observe(this, Observer {
-            it?.let { data ->
-                adapter.setData(data.songs)
-                binding.loading = false
+        swipe.setOnRefreshListener {
+            when (type) {
+                Type.PLAYLIST.type -> {
+                    App.mRefreshStrategy.forceRefresh(Playlist::class.java)
+                    vm.refreshPlaylistById(id)
+                }
+
+                Type.ALBUM.type -> {
+                    App.mRefreshStrategy.forceRefresh(Album::class.java)
+                    vm.refreshAlbumById(id, name.toString())
+                }
+            }
+        }
+
+        when (type) {
+            Type.PLAYLIST.type -> {
+                vm.getPlaylistById(id).observe(this, Observer {
+                    it?.let { data ->
+                        adapter.setData(data.songs)
+                        binding.loading = false
+                        if (swipe.isRefreshing)
+                            swipe.isRefreshing = false
+                    }
+
+                    if (it == null) {
+                        binding.loading = true
+                    }
+
+                    vm.refreshPlaylistById(id)
+                })
             }
 
-            if (it == null) {
-                binding.loading = true
-            }
+            Type.ALBUM.type -> {
+                vm.getAlbumById(id).observe(this, Observer {
+                    it?.let { data ->
+                        adapter.setData(data.songs)
+                        binding.loading = false
+                        if (swipe.isRefreshing)
+                            swipe.isRefreshing = false
+                    }
 
-            vm.refreshById(id)
-        })
+                    if (it == null) {
+                        binding.loading = true
+                    }
+
+                    vm.refreshAlbumById(id, name.toString())
+                })
+            }
+        }
     }
 
     private fun changeBackground(url : String) {
