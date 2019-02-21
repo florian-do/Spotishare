@@ -4,6 +4,7 @@ import android.databinding.DataBindingUtil
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
@@ -13,7 +14,7 @@ import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.SearchResponse
 import do_f.com.spotishare.databinding.AdapterSearchBinding
 
-class SearchAdapter(val glide: RequestManager, val listener: (song : Item) -> Unit) : RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
+class SearchAdapter(val glide: RequestManager, val listener: (song : Item, view : View) -> Unit) : RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
 
     var items : List<Item> = emptyList()
 
@@ -45,7 +46,7 @@ class SearchAdapter(val glide: RequestManager, val listener: (song : Item) -> Un
         val data : Item = items[p1]
 
         holder.binding.root.setOnClickListener {
-            listener.invoke(data)
+            listener.invoke(data, it)
         }
 
         when(data.type) {
