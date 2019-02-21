@@ -13,4 +13,7 @@
     <string name="search_text_caption">Find your favorite music and artists</string>
 
     <string name="search_adapter_type_track">Song • %s</string>
+    <string name="explicit">explicit</string>
+
+    <string name="artist_album">%1$s • %2$s</string>
 </resources>
