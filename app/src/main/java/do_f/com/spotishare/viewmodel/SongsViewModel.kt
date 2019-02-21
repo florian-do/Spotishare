@@ -3,9 +3,8 @@ package do_f.com.spotishare.viewmodel
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.ViewModel
 import android.databinding.ObservableField
-import do_f.com.spotishare.api.model.Item
-import do_f.com.spotishare.api.model.SinglePlaylistResponse
 import do_f.com.spotishare.api.repository.PlaylistsRepo
+import do_f.com.spotishare.databases.entities.Playlist
 
 class SongsViewModel : ViewModel() {
     val url : ObservableField<String> = ObservableField()
@@ -17,7 +16,6 @@ class SongsViewModel : ViewModel() {
         repo = PlaylistsRepo()
     }
 
-    fun getPlaylistById(id : String) : LiveData<SinglePlaylistResponse> {
-        return repo.getPlaylistById(id)
-    }
+    fun getPlaylistById(id : String) : LiveData<Playlist> = repo.getPlaylistById(id)
+    fun refreshById(id: String) = repo.refreshById(id)
 }
