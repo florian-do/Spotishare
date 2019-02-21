@@ -41,6 +41,7 @@ import do_f.com.spotishare.adapters.SearchAdapter
 import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.SearchResponse
 import do_f.com.spotishare.base.BFragment
+import do_f.com.spotishare.databases.entities.Type
 import do_f.com.spotishare.databinding.FragmentSearchBinding
 import do_f.com.spotishare.view.MyEditText
 import do_f.com.spotishare.viewmodel.SearchViewModel
@@ -91,7 +92,19 @@ class SearchFragment : BFragment() {
         }
 
         adapter = SearchAdapter(Glide.with(this.context!!), listener = { it: Item, view: View ->
-            Navigation.findNavController(view).navigate(R.id.songsFragment)
+
+            Log.d(TAG, "${Type.PLAYLIST.name} / ${Type.PLAYLIST.ordinal}")
+            Log.d(TAG, "${Type.PLAYLIST.type} / ${Type.PLAYLIST.ordinal}")
+            when (it.type) {
+                Type.PLAYLIST.type -> {
+                    val arg = Bundle()
+                    arg.putString(SongsFragment.ARG_ID, it.id)
+                    arg.putString(SongsFragment.ARG_TYPE, it.type)
+                    arg.putString(SongsFragment.ARG_URL, it.images[0].url)
+                    arg.putString(SongsFragment.ARG_NAME, it.name)
+                    Navigation.findNavController(view).navigate(R.id.songsFragment, arg)
+                }
+            }
         })
 
         rvFeed.layoutManager = LinearLayoutManager(context)
@@ -119,6 +132,9 @@ class SearchFragment : BFragment() {
     }
 
     private fun callApi() {
+        hideKeyboard()
+        binding.setLoading(true)
+        binding.isContent = true
         searchViewModel.search(search_field.text.toString())
             .observe(this, Observer {
                 if (it != null) {
@@ -126,8 +142,7 @@ class SearchFragment : BFragment() {
                     buildSearchQuery(it)
                     Log.d(TAG, "observe ${items.size}")
                     binding.isContent = items.isNotEmpty()
-                    if (items.isNotEmpty())
-                        hideKeyboard()
+                    binding.setLoading(false)
                     adapter.refreshData(items)
                 }
         })
