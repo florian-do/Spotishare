@@ -27,6 +27,7 @@ import android.view.animation.OvershootInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.navigation.Navigation
 
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -89,8 +90,8 @@ class SearchFragment : BFragment() {
             fragmentManager?.popBackStack()
         }
 
-        adapter = SearchAdapter(Glide.with(this.context!!), listener = {
-            getSpotifyAppRemote().playerApi.play(it.uri)
+        adapter = SearchAdapter(Glide.with(this.context!!), listener = { it: Item, view: View ->
+            Navigation.findNavController(view).navigate(R.id.songsFragment)
         })
 
         rvFeed.layoutManager = LinearLayoutManager(context)
