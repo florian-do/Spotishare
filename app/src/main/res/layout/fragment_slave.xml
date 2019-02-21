@@ -85,8 +85,9 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="16dp"
-                android:layoutAnimation="@anim/layout_animation_fall_down"
                 tools:listitem="@layout/adapter_playlist"
+                tools:layoutManager="android.support.v7.widget.GridLayoutManager"
+                tools:spanCount="2"
                 app:layout_constraintTop_toBottomOf="@+id/search_bar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"/>
