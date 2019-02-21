@@ -1,6 +1,5 @@
 package do_f.com.spotishare.api.service
 
-import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.MyPlaylistsResponse
 import do_f.com.spotishare.api.model.SinglePlaylistResponse
 import retrofit2.Call
