@@ -4,12 +4,13 @@ import android.arch.persistence.room.Database
 import android.arch.persistence.room.RoomDatabase
 import android.arch.persistence.room.TypeConverters
 import do_f.com.spotishare.databases.converters.RowTypeConverter
+import do_f.com.spotishare.databases.entities.Album
 import do_f.com.spotishare.databases.entities.Playlist
 import do_f.com.spotishare.databases.entities.Playlists
 
 @Database(
-    entities = [Playlists::class, Playlist::class],
-    version = 5,
+    entities = [Playlists::class, Playlist::class, Album::class],
+    version = 6,
     exportSchema = false
 )
 
@@ -19,4 +20,5 @@ abstract class CacheDb : RoomDatabase() {
         val DB_NAME = "cache.db"
     }
     abstract fun playlistsDao() : PlaylistsDao
+    abstract fun albumsDao() : AlbumsDao
 }
