@@ -36,7 +36,7 @@ class PlaylistsAdapter(val rm: RequestManager, val listener: (p : Playlists, v :
     }
 
     override fun onBindViewHolder(holder: ViewHolder, p1: Int) {
-        items.get(p1).apply {
+        items[p1].apply {
 
             holder.binding.root.setOnClickListener {
                 listener.invoke(this, it)

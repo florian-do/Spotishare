@@ -30,11 +30,11 @@ class SlaveFragment : BFragment() {
 
     private val mHandler = Handler(Looper.getMainLooper())
 
-    // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
     private lateinit var adapter : PlaylistsAdapter
+    private var lastPosition : Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,9 +44,13 @@ class SlaveFragment : BFragment() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.d(TAG, "onSaveInstanceState")
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View? {
-        Log.d(TAG, "onCreateView: ")
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_slave, container, false)
     }
@@ -87,6 +91,7 @@ class SlaveFragment : BFragment() {
                 it.apply {
                     adapter.items = this
                     adapter.notifyDataSetChanged()
+                    dataSuccessfullyLoad(main)
                 }
 
                 repo.refresh()
@@ -114,12 +119,11 @@ class SlaveFragment : BFragment() {
 
                     mHandler.post {
                         if (main != null) {
-                            main.background = gd
-                            dataSuccessfullyLoad(main)
-//                            val transition = TransitionDrawable(arrayOf(main.background, gd))
-//                            transition.isCrossFadeEnabled = true
-//                            main.background = transition
-//                            transition.startTransition(1000)
+//                            main.background = gd
+                            val transition = TransitionDrawable(arrayOf(main.background, gd))
+                            transition.isCrossFadeEnabled = true
+                            main.background = transition
+                            transition.startTransition(500)
                         }
                     }
                 }
