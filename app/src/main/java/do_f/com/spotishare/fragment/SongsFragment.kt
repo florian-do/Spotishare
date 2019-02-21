@@ -47,7 +47,6 @@ class SongsFragment : BFragment() {
             id = it.getString(ARG_ID)
             url = it.getString(ARG_URL)
             name = it.getString(ARG_NAME)
-            Log.d(TAG, "${id}")
         }
     }
 
@@ -65,7 +64,6 @@ class SongsFragment : BFragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
         vm.name.set(name)
         changeBackground(url)
 
@@ -76,9 +74,15 @@ class SongsFragment : BFragment() {
 
         vm.getPlaylistById(id).observe(this, Observer {
             it?.let { data ->
-                Log.d(TAG, "${data.items.size}")
-                adapter.setData(data.items)
+                adapter.setData(data.songs)
+                binding.loading = false
             }
+
+            if (it == null) {
+                binding.loading = true
+            }
+
+            vm.refreshById(id)
         })
     }
 
@@ -88,18 +92,17 @@ class SongsFragment : BFragment() {
             .load(url)
             .listener(object : RequestListener<Bitmap> {
                 override fun onLoadFailed(e: GlideException?, model: Any?,
-                                          target: Target<Bitmap>?, isFirstResource: Boolean): Boolean {
+                              target: Target<Bitmap>?, isFirstResource: Boolean): Boolean {
                     return false
                 }
 
                 override fun onResourceReady(resource: Bitmap?, model: Any?,
-                                             target: Target<Bitmap>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
-
+                             target: Target<Bitmap>?, dataSource: DataSource?,
+                             isFirstResource: Boolean): Boolean {
                     setBackground(resource!!)
                     dataSuccessfullyLoad(main)
                     return false
                 }
-
             }).into(image_header)
     }
 
