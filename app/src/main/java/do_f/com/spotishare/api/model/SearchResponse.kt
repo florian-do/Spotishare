@@ -3,10 +3,21 @@ package do_f.com.spotishare.api.model
 data class SearchResponse(
     val artists: Artists,
     val tracks: Track,
-    val playlists: Playlists
+    val playlists: Playlists,
+    val albums: Albums
 )
 
 data class Playlists(
+    val href: String,
+    val items: List<Item>,
+    val limit: Int,
+    val next: String,
+    val offset: Int,
+    val previous: Any,
+    val total: Int
+)
+
+data class Albums(
     val href: String,
     val items: List<Item>,
     val limit: Int,
