@@ -74,6 +74,11 @@ class SearchFragment : BFragment() {
         return binding.root
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.d(TAG, "onSaveInstanceState")
+    }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
@@ -92,11 +97,17 @@ class SearchFragment : BFragment() {
         }
 
         adapter = SearchAdapter(Glide.with(this.context!!), listener = { it: Item, view: View ->
-
-            Log.d(TAG, "${Type.PLAYLIST.name} / ${Type.PLAYLIST.ordinal}")
-            Log.d(TAG, "${Type.PLAYLIST.type} / ${Type.PLAYLIST.ordinal}")
             when (it.type) {
                 Type.PLAYLIST.type -> {
+                    val arg = Bundle()
+                    arg.putString(SongsFragment.ARG_ID, it.id)
+                    arg.putString(SongsFragment.ARG_TYPE, it.type)
+                    arg.putString(SongsFragment.ARG_URL, it.images[0].url)
+                    arg.putString(SongsFragment.ARG_NAME, it.name)
+                    Navigation.findNavController(view).navigate(R.id.songsFragment, arg)
+                }
+
+                Type.ALBUM.type -> {
                     val arg = Bundle()
                     arg.putString(SongsFragment.ARG_ID, it.id)
                     arg.putString(SongsFragment.ARG_TYPE, it.type)
@@ -154,6 +165,15 @@ class SearchFragment : BFragment() {
             changeBackground(data.artists.items[0].images[0].url)
         }
 
+        data.albums.let {
+            if (it.items.isNotEmpty()) {
+                if (it.items.size > 1)
+                    for (i in 0..1) { items.add(it.items[i]) }
+                else
+                    items.add(it.items[0])
+            }
+        }
+
         data.playlists.let {
             if (it.items.isNotEmpty()) {
                 if (it.items.size > 1)
@@ -203,6 +223,7 @@ class SearchFragment : BFragment() {
     }
 
     private fun doAnimation() {
+        Log.d(TAG, "doAnimation: ${set}")
         when (set) {
             true -> {
                 updateConstraints(R.layout.fragment_search)
@@ -248,6 +269,13 @@ class SearchFragment : BFragment() {
         hideKeyboard()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (set) set = false
+        if (search_field.text.isNotEmpty())
+            callApi()
+    }
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         if (context is OnFragmentInteractionListener) {
@@ -263,7 +291,6 @@ class SearchFragment : BFragment() {
     }
 
     interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
     }
 

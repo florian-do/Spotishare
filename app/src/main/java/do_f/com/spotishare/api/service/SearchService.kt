@@ -7,7 +7,6 @@ import retrofit2.http.Query
 
 interface SearchService {
 
-    @GET("search?type=track%2Cartist%2Cplaylist")
+    @GET("search?type=track%2Cartist%2Cplaylist%2Calbum")
     fun search(@Query("q") q : String, @Query("limit") limit : Int) : Call<SearchResponse>
-
 }
