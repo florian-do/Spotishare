@@ -1,9 +1,7 @@
 package do_f.com.spotishare.databases.entities
 
-import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
-import com.google.gson.annotations.SerializedName
 import do_f.com.spotishare.api.model.Image
 
 @Entity
