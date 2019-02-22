@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
+    <dimen name="collapsible_app_bar_height">365dp</dimen>
+    <dimen name="collapsible_toolbar_height">350dp</dimen>
 </resources>
