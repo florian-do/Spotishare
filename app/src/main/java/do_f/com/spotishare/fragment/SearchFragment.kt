@@ -135,7 +135,8 @@ class SearchFragment : BFragment() {
 
         search_field.setKeyBackListener(object : MyEditText.OnKeyImeListener {
             override fun onKeyIme(keyCode: Int, event: KeyEvent?) {
-                if (set && event?.action == KeyEvent.ACTION_DOWN && search_field.text.isEmpty()) {
+                if (event?.action == KeyEvent.ACTION_DOWN && search_field.text.isEmpty()) {
+                    set = true
                     doAnimation()
                 }
             }
