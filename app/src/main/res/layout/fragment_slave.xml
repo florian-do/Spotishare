@@ -3,6 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
+        <variable name="loading" type="Boolean" />
+    </data>
+
     <android.support.v4.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -14,8 +18,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:animateLayoutChanges="true"
-            android:alpha="0"
-            tools:alpha="1"
             tools:context=".fragment.SlaveFragment">
 
             <TextView
@@ -85,11 +87,25 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="16dp"
-                android:layoutAnimation="@anim/layout_animation_fall_down"
+                android:visibility="@{safeUnbox(!loading)}"
                 tools:listitem="@layout/adapter_playlist"
+                tools:layoutManager="android.support.v7.widget.GridLayoutManager"
+                tools:spanCount="2"
                 app:layout_constraintTop_toBottomOf="@+id/search_bar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"/>
+
+            <android.support.v4.widget.ContentLoadingProgressBar
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:indeterminateTint="@color/green_spotify"
+                android:visibility="@{safeUnbox(loading)}"
+                android:layout_marginTop="75dp"
+                style="?android:attr/progressBarStyleLarge"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/search_bar"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
             <Button
                 style="@style/Button"

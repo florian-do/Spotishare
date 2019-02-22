@@ -7,6 +7,7 @@
     <color name="background">#191414</color>
     <color name="background_player">#222326</color>
     <color name="white">#FFFFFF</color>
+    <color name="caption_grey">#88898C</color>
     <color name="green_spotify">#1db954</color>
     <color name="search_grey">#424445</color>
     <color name="search_grey_t">#AA424445</color>
