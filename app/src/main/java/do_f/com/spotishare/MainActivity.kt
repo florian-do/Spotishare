@@ -15,7 +15,9 @@ import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.widget.Toast
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
+import com.google.gson.Gson
 
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
@@ -26,6 +28,7 @@ import do_f.com.spotishare.api.SpotifyClient
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.fragment.HomeFragment
 import do_f.com.spotishare.fragment.SlaveFragment
+import do_f.com.spotishare.model.Queue
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
@@ -37,7 +40,8 @@ class MainActivity : AppCompatActivity() {
         val REQUEST_CODE = 1337
         val REDIRECT_URI = "***REMOVED***"
         val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
-        val  FCM_INTENT_FILTER = "fcm_service_intent_filter"
+        val FCM_INTENT_FILTER = "fcm_service_intent_filter"
+        var queueSize = 0
     }
 
     private var mCountDownTimer : CountDownTimer? = null
@@ -53,9 +57,84 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val childEventListener = object : ChildEventListener {
+        override fun onChildAdded(dataSnapshot: DataSnapshot, previousChildName: String?) {
+            // A new comment has been added, add it to the displayed list
+
+            try {
+                val comment: Queue? = dataSnapshot.getValue(Queue::class.java)
+            } catch(e : DatabaseException)  {
+
+            }
+
+            // ...
+        }
+
+        override fun onChildChanged(dataSnapshot: DataSnapshot, previousChildName: String?) {
+            Log.d(TAG, "onChildChanged: ${dataSnapshot.key}")
+
+            // A comment has changed, use the key to determine if we are displaying this
+            // comment and if so displayed the changed comment.
+            val newComment: Queue? = dataSnapshot.getValue(Queue::class.java)
+            val commentKey = dataSnapshot.key
+
+            // ...
+        }
+
+        override fun onChildRemoved(dataSnapshot: DataSnapshot) {
+            Log.d(TAG, "onChildRemoved:" + dataSnapshot.key!!)
+
+            // A comment has changed, use the key to determine if we are displaying this
+            // comment and if so remove it.
+            val commentKey = dataSnapshot.key
+
+            // ...
+        }
+
+        override fun onChildMoved(dataSnapshot: DataSnapshot, previousChildName: String?) {
+            Log.d(TAG, "onChildMoved:" + dataSnapshot.key!!)
+
+            // A comment has changed position, use the key to determine if we are
+            // displaying this comment and if so move it.
+            val movedComment = dataSnapshot.getValue(Queue::class.java)
+            val commentKey = dataSnapshot.key
+
+            // ...
+        }
+
+        override fun onCancelled(databaseError: DatabaseError) {
+            Log.w(TAG, "postComments:onCancelled", databaseError.toException())
+        }
+    }
+
+    private val valueEventListener = object : ValueEventListener {
+        override fun onCancelled(p0: DatabaseError) {
+
+        }
+
+        override fun onDataChange(p0: DataSnapshot) {
+            var i = 0
+            for (postSnapshot in p0.children) { i++ }
+            queueSize = i
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val database = App.firebaseDb
+        val tmp : MutableList<Queue> = mutableListOf()
+        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Hier", "Lomepal", true))
+        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Ojd", "Lomepal", true))
+        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "demain", "Lomepal", true))
+        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Beonoj", "Lomepal", true))
+        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Bonjour", "Lomepal", true))
+        database.setValue(tmp)
+//        database.addChildEventListener(childEventListener)
+        database.addListenerForSingleValueEvent(valueEventListener)
+        database.addValueEventListener(valueEventListener)
+        // [END read_message]
 
 //        FirebaseMessaging.getInstance().subscribeToTopic("weather")
 //            .addOnCompleteListener { task ->
@@ -184,6 +263,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        connectToSpotify()
+
+        // Register LocalBroadcast
+        LocalBroadcastManager
+            .getInstance(this)
+            .registerReceiver(mBroadcastReceiver, IntentFilter(FCM_INTENT_FILTER))
+    }
+
+    fun connectToSpotify() {
         val connectionParams = ConnectionParams.Builder(CLIENT_ID)
             .setRedirectUri(REDIRECT_URI)
             .showAuthView(true)
@@ -192,6 +280,7 @@ class MainActivity : AppCompatActivity() {
         SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
             override fun onFailure(p0: Throwable?) {
                 Log.e(TAG, "error ", p0)
+                connectToSpotify()
             }
 
             override fun onConnected(p0: SpotifyAppRemote?) {
@@ -200,11 +289,6 @@ class MainActivity : AppCompatActivity() {
                 spotifyAppRemoteConnect()
             }
         })
-
-        // Register LocalBroadcast
-        LocalBroadcastManager
-            .getInstance(this)
-            .registerReceiver(mBroadcastReceiver, IntentFilter(FCM_INTENT_FILTER))
     }
 
     override fun onStop() {
