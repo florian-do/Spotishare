@@ -25,6 +25,7 @@ import do_f.com.spotishare.R
 import do_f.com.spotishare.Utils
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.databinding.FragmentHomeBinding
+import do_f.com.spotishare.dialogfragment.RoomFragment
 import do_f.com.spotishare.model.Queue
 import kotlinx.android.synthetic.main.fragment_home.*
 
@@ -46,15 +47,21 @@ class HomeFragment : BFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         master.setOnClickListener {
+            MainActivity.roomCode = Utils.generateRoomNumber()
+            App.firebaseDb.child(MainActivity.roomCode).push().setValue("init")
+            Navigation.findNavController(it).navigate(R.id.discoverFragment)
+
 //            val arg = Bundle()
 //            arg.putString(MasterFragment.ARG_PARAM1, "HEY HO HEY")
 //            Navigation.findNavController(it).navigate(R.id.masterFragment, arg)
-            App.firebaseDb.child(Utils.generateRoomNumber()).setValue("create")
-            App.firebaseDb.child(Utils.generateRoomNumber()).push().setValue("push create")
+//            App.firebaseDb.child(Utils.generateRoomNumber()).setValue("create")
+//            App.firebaseDb.child(Utils.generateRoomNumber()).push().setValue("push create")
         }
 
         slave.setOnClickListener {
-            Navigation.findNavController(it).navigate(R.id.slaveFragment)
+            val f : RoomFragment = RoomFragment.newInstance()
+            f.show(fragmentManager, null)
+//            Navigation.findNavController(it).navigate(R.id.slaveFragment)
         }
 
         cover_placeholder.setOnClickListener {
