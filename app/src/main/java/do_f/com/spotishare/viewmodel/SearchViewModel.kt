@@ -12,8 +12,8 @@ import do_f.com.spotishare.datasource.SearchDSFactory
 
 class SearchViewModel : ViewModel() {
 
-    private lateinit var data :LiveData<PagedList<SearchResponse>>
-    private lateinit var searchDSFactory : SearchDSFactory
+    private var data :LiveData<PagedList<SearchResponse>>
+    private var searchDSFactory : SearchDSFactory
 
     private val api : SearchService = App.retrofit.create(SearchService::class.java)
     private val config : PagedList.Config = PagedList.Config.Builder()
@@ -22,7 +22,6 @@ class SearchViewModel : ViewModel() {
         .build()
 
     private val repo : SearchRepo
-
 
     init {
         repo = SearchRepo()
