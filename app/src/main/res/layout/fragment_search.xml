@@ -69,6 +69,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
+                android:id="@+id/search_arrow"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_arrow_left"
@@ -79,7 +80,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                android:id="@+id/search_arrow"/>
+                tools:ignore="ContentDescription"/>
 
             <do_f.com.spotishare.view.MyEditText
                 android:id="@+id/search_field"
@@ -123,7 +124,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                android:id="@+id/imageView2"/>
+                android:id="@+id/imageView2"
+                tools:ignore="ContentDescription"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -158,7 +160,7 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:indeterminateTint="@color/green_spotify"
-            android:visibility="@{safeUnbox(loading)}"
+            android:visibility="@{safeUnbox(loading), default=gone}"
             style="?android:attr/progressBarStyleLarge"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
