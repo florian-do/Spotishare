@@ -7,6 +7,7 @@ import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationResponse
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.os.*
 import android.preference.PreferenceManager
@@ -24,6 +25,7 @@ import com.spotify.sdk.android.authentication.AuthenticationRequest
 import do_f.com.spotishare.api.SpotifyClient
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.fragment.HomeFragment
+import do_f.com.spotishare.fragment.SlaveFragment
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
@@ -42,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private var mSpotifyAppRemote : SpotifyAppRemote? = null
     private val mHandler = Handler(Looper.getMainLooper())
     private var mFCMToken = "";
+    private var currentAlbumImage : Bitmap? = null
 
 
     private val mBroadcastReceiver : BroadcastReceiver = object  : BroadcastReceiver() {
@@ -154,13 +157,16 @@ class MainActivity : AppCompatActivity() {
 
                 val track = it.track
                 val bmp = mSpotifyAppRemote?.imagesApi?.getImage(track.imageUri)
-                bmp?.setResultCallback {
-                    val bmpTmp = it
+                bmp?.setResultCallback { bmp ->
+                    currentAlbumImage = bmp
                     val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
                     navHost?.let {
-                        it.childFragmentManager.primaryNavigationFragment?.let {
-                            val f = it as HomeFragment
-                            f.setImage(bmpTmp)
+                        it.childFragmentManager.primaryNavigationFragment?.let { f ->
+                            if (f is HomeFragment)
+                                f.setImage(bmp)
+
+                            if (f is SlaveFragment)
+                                f.updateBackground(bmp)
                         }
                     }
                 }
@@ -246,6 +252,8 @@ class MainActivity : AppCompatActivity() {
     fun getSpotifyAppRemote() : SpotifyAppRemote? {
         return mSpotifyAppRemote
     }
+
+    fun getCurrentAlbumBitmap() : Bitmap? = currentAlbumImage
 
     private fun getAccessToken(callback : (String) -> Unit) {
         AsyncTask.execute {
