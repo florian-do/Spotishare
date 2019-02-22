@@ -16,4 +16,7 @@
     <string name="explicit">explicit</string>
 
     <string name="artist_album">%1$s • %2$s</string>
+
+    <string name="room_title">Room Number</string>
+    <string name="room_caption">Please type the correct room number to join</string>
 </resources>
