@@ -2,6 +2,8 @@ package do_f.com.spotishare.fragment
 
 import android.arch.lifecycle.Observer
 import android.content.Context
+import android.databinding.DataBindingUtil
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.*
 import android.util.Log
@@ -19,20 +21,26 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.TransitionDrawable
 import android.support.v7.widget.GridLayoutManager
 import androidx.navigation.Navigation
+import com.bumptech.glide.Glide
 import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.PlaylistsAdapter
 import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
+import do_f.com.spotishare.databases.entities.Playlists
+import do_f.com.spotishare.databinding.FragmentSlaveBinding
 
 class SlaveFragment : BFragment() {
 
-    private var mCountDownTimer : CountDownTimer? = null
     private val mHandler = Handler(Looper.getMainLooper())
 
-    // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
+    private var gd : GradientDrawable? = null
+    private var backgroundColor : Int = 0
+
+    private lateinit var adapter : PlaylistsAdapter
+    private lateinit var binding : FragmentSlaveBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,17 +50,26 @@ class SlaveFragment : BFragment() {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.d(TAG, "onSaveInstanceState")
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View? {
-        Log.d(TAG, "onCreateView: ")
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_slave, container, false)
+        binding = DataBindingUtil.inflate(
+            inflater,
+            R.layout.fragment_slave,
+            container,
+            false
+        )
+        backgroundColor = resources.getColor(R.color.background)
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         initPlaylistFeed()
-        initSpotifyData()
 
         search_bar.setOnClickListener {
             mHandler.removeCallbacksAndMessages(null)
@@ -61,24 +78,34 @@ class SlaveFragment : BFragment() {
     }
 
     private fun initPlaylistFeed() {
-        val adapter = PlaylistsAdapter(context!!)
+        binding.loading = true
+        adapter = PlaylistsAdapter(Glide.with(this), listener = { it: Playlists, view: View ->
+            val arg = Bundle()
+            arg.putString(SongsFragment.ARG_ID, it.id)
+            arg.putString(SongsFragment.ARG_TYPE, it.type)
+            arg.putString(SongsFragment.ARG_URL, it.images[0].url)
+            arg.putString(SongsFragment.ARG_NAME, it.name)
+            Navigation.findNavController(view).navigate(R.id.songsFragment, arg)
+        })
+
         val repo = PlaylistsRepo()
 
         rvPlaylist.adapter = adapter
         rvPlaylist.layoutManager = GridLayoutManager(
             context, 2, GridLayoutManager.VERTICAL, false)
-        rvPlaylist.setHasFixedSize(true)
         rvPlaylist.isNestedScrollingEnabled = false
 
         repo.getPlaylists().observe(this, Observer {
-            Log.d(TAG, "trigger")
             if (it == null) {
                 repo.refresh()
             } else {
                 it.apply {
-                    dataSuccessfullyLoad()
                     adapter.items = this
                     adapter.notifyDataSetChanged()
+                    binding.loading = false
+                    getMainActivity()?.getCurrentAlbumBitmap()?.let {
+                        changeBackground(it)
+                    }
                 }
 
                 repo.refresh()
@@ -86,51 +113,43 @@ class SlaveFragment : BFragment() {
         })
     }
 
-    fun dataSuccessfullyLoad() {
-        main.animate().alpha(1F).setDuration(600L).start()
-    }
-
     override fun refreshSpotifyAppRemote() {
-        initSpotifyData()
+
     }
 
-    private fun initSpotifyData() {
-        // Change background color from album image
-        getSpotifyAppRemote().apply {
-            playerApi.subscribeToPlayerState().setEventCallback {
-                imagesApi.getImage(it.track.imageUri).setResultCallback {
-                    val domColor = Utils.manipulateColor(Utils.getDominantColor(it), 0.8F)
-                    val backgroundColor = resources.getColor(R.color.background)
-                    val colors = intArrayOf(domColor, backgroundColor, backgroundColor)
+    fun changeBackground(bitmap : Bitmap) {
+        val domColor = Utils.manipulateColor(Utils.getDominantColor(bitmap), 0.8F)
+        val colors = intArrayOf(domColor, backgroundColor, backgroundColor)
 
-                    val gd = GradientDrawable(
-                        GradientDrawable.Orientation.TL_BR, colors
-                    )
+        gd = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR, colors
+        )
 
-                    mHandler.post {
-                        if (main != null) {
-                            val transition = TransitionDrawable(arrayOf(main.background, gd))
-                            transition.isCrossFadeEnabled = true
-                            main.background = transition
-                            transition.startTransition(1000)
-                        }
-                    }
+        main.background = gd
+    }
+
+    fun updateBackground(bitmap : Bitmap) {
+        AsyncTask.execute {
+            val domColor = Utils.manipulateColor(Utils.getDominantColor(bitmap), 0.8F)
+            val colors = intArrayOf(domColor, backgroundColor, backgroundColor)
+
+            gd = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR, colors
+            )
+
+            mHandler.post {
+                if (main != null) {
+                    val transition = TransitionDrawable(arrayOf(main.background, gd))
+                    transition.isCrossFadeEnabled = true
+                    main.background = transition
+                    transition.startTransition(500)
                 }
             }
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        if (mCountDownTimer != null)
-            mCountDownTimer?.cancel()
-    }
-
     override fun onStop() {
         super.onStop()
-        if (mCountDownTimer != null)
-            mCountDownTimer!!.cancel()
-
         mHandler.removeCallbacksAndMessages(null)
     }
 
