@@ -16,10 +16,12 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationRequest
 import com.spotify.sdk.android.authentication.AuthenticationResponse
+import do_f.com.spotishare.App
 import do_f.com.spotishare.MainActivity
 import do_f.com.spotishare.R
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.databinding.FragmentHomeBinding
+import do_f.com.spotishare.model.Queue
 import kotlinx.android.synthetic.main.fragment_home.*
 
 class HomeFragment : BFragment() {
@@ -47,6 +49,13 @@ class HomeFragment : BFragment() {
 
         slave.setOnClickListener {
             Navigation.findNavController(it).navigate(R.id.slaveFragment)
+        }
+
+        cover_placeholder.setOnClickListener {
+            App.firebaseDb
+                .child(MainActivity.queueSize.toString())
+                .setValue(Queue("spotify:song:1Yfe3NJlioHys7jwHdfVm", "Hier", "Lomepal", true))
+//            App.firebaseDb.setValue(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Beau la folie", "Lomepal", true))
         }
     }
 
