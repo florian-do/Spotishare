@@ -21,7 +21,7 @@
 
         <action
             android:id="@+id/action_homeFragment_to_slaveFragment"
-            app:destination="@id/slaveFragment"
+            app:destination="@id/discoverFragment"
             app:enterAnim="@anim/nav_default_enter_anim"
             app:exitAnim="@anim/nav_default_exit_anim"
             app:popEnterAnim="@anim/nav_default_pop_enter_anim"
@@ -36,10 +36,10 @@
         tools:layout="@layout/fragment_master"/>
 
     <fragment
-        android:id="@+id/slaveFragment"
-        android:name="do_f.com.spotishare.fragment.SlaveFragment"
-        android:label="fragment_slave"
-        tools:layout="@layout/fragment_slave">
+        android:id="@+id/discoverFragment"
+        android:name="do_f.com.spotishare.fragment.DiscoverFragment"
+        android:label="fragment_discover"
+        tools:layout="@layout/fragment_discover">
 
         <action
             android:id="@+id/action_slaveFragment_to_searchFragment"
