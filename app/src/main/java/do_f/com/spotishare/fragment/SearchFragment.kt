@@ -27,6 +27,7 @@ import android.view.animation.OvershootInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.navigation.Navigation
 
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -40,6 +41,7 @@ import do_f.com.spotishare.adapters.SearchAdapter
 import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.SearchResponse
 import do_f.com.spotishare.base.BFragment
+import do_f.com.spotishare.databases.entities.Type
 import do_f.com.spotishare.databinding.FragmentSearchBinding
 import do_f.com.spotishare.view.MyEditText
 import do_f.com.spotishare.viewmodel.SearchViewModel
@@ -72,6 +74,11 @@ class SearchFragment : BFragment() {
         return binding.root
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.d(TAG, "onSaveInstanceState")
+    }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
@@ -89,8 +96,26 @@ class SearchFragment : BFragment() {
             fragmentManager?.popBackStack()
         }
 
-        adapter = SearchAdapter(Glide.with(this.context!!), listener = {
-            getSpotifyAppRemote().playerApi.play(it.uri)
+        adapter = SearchAdapter(Glide.with(this.context!!), listener = { it: Item, view: View ->
+            when (it.type) {
+                Type.PLAYLIST.type -> {
+                    val arg = Bundle()
+                    arg.putString(SongsFragment.ARG_ID, it.id)
+                    arg.putString(SongsFragment.ARG_TYPE, it.type)
+                    arg.putString(SongsFragment.ARG_URL, it.images[0].url)
+                    arg.putString(SongsFragment.ARG_NAME, it.name)
+                    Navigation.findNavController(view).navigate(R.id.songsFragment, arg)
+                }
+
+                Type.ALBUM.type -> {
+                    val arg = Bundle()
+                    arg.putString(SongsFragment.ARG_ID, it.id)
+                    arg.putString(SongsFragment.ARG_TYPE, it.type)
+                    arg.putString(SongsFragment.ARG_URL, it.images[0].url)
+                    arg.putString(SongsFragment.ARG_NAME, it.name)
+                    Navigation.findNavController(view).navigate(R.id.songsFragment, arg)
+                }
+            }
         })
 
         rvFeed.layoutManager = LinearLayoutManager(context)
@@ -118,6 +143,9 @@ class SearchFragment : BFragment() {
     }
 
     private fun callApi() {
+        hideKeyboard()
+        binding.setLoading(true)
+        binding.isContent = true
         searchViewModel.search(search_field.text.toString())
             .observe(this, Observer {
                 if (it != null) {
@@ -125,8 +153,7 @@ class SearchFragment : BFragment() {
                     buildSearchQuery(it)
                     Log.d(TAG, "observe ${items.size}")
                     binding.isContent = items.isNotEmpty()
-                    if (items.isNotEmpty())
-                        hideKeyboard()
+                    binding.setLoading(false)
                     adapter.refreshData(items)
                 }
         })
@@ -136,6 +163,15 @@ class SearchFragment : BFragment() {
         if (data.artists.total > 0) {
             items.add(data.artists.items[0])
             changeBackground(data.artists.items[0].images[0].url)
+        }
+
+        data.albums.let {
+            if (it.items.isNotEmpty()) {
+                if (it.items.size > 1)
+                    for (i in 0..1) { items.add(it.items[i]) }
+                else
+                    items.add(it.items[0])
+            }
         }
 
         data.playlists.let {
@@ -187,6 +223,7 @@ class SearchFragment : BFragment() {
     }
 
     private fun doAnimation() {
+        Log.d(TAG, "doAnimation: ${set}")
         when (set) {
             true -> {
                 updateConstraints(R.layout.fragment_search)
@@ -232,6 +269,13 @@ class SearchFragment : BFragment() {
         hideKeyboard()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (set) set = false
+        if (search_field.text.isNotEmpty())
+            callApi()
+    }
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         if (context is OnFragmentInteractionListener) {
@@ -247,7 +291,6 @@ class SearchFragment : BFragment() {
     }
 
     interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         fun onFragmentInteraction(uri: Uri)
     }
 
