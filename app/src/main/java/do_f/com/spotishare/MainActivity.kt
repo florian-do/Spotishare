@@ -13,11 +13,9 @@ import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
-import android.widget.Toast
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
-import com.google.gson.Gson
 
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
@@ -27,7 +25,7 @@ import com.spotify.sdk.android.authentication.AuthenticationRequest
 import do_f.com.spotishare.api.SpotifyClient
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.fragment.HomeFragment
-import do_f.com.spotishare.fragment.SlaveFragment
+import do_f.com.spotishare.fragment.DiscoverFragment
 import do_f.com.spotishare.model.Queue
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
@@ -42,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
         val FCM_INTENT_FILTER = "fcm_service_intent_filter"
         var queueSize : Long = 0
+        var roomCode : String = ""
     }
 
     private var mCountDownTimer : CountDownTimer? = null
@@ -242,7 +241,7 @@ class MainActivity : AppCompatActivity() {
                             if (f is HomeFragment)
                                 f.setImage(bmp)
 
-                            if (f is SlaveFragment)
+                            if (f is DiscoverFragment)
                                 f.updateBackground(bmp)
                         }
                     }
