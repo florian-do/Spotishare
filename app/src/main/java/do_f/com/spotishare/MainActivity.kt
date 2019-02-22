@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         val REDIRECT_URI = "http://lapusheen.chat/callback"
         val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
         val FCM_INTENT_FILTER = "fcm_service_intent_filter"
-        var queueSize = 0
+        var queueSize : Long = 0
     }
 
     private var mCountDownTimer : CountDownTimer? = null
@@ -113,9 +113,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onDataChange(p0: DataSnapshot) {
-            var i = 0
-            for (postSnapshot in p0.children) { i++ }
-            queueSize = i
+            queueSize = p0.childrenCount
         }
     }
 
@@ -302,6 +300,7 @@ class MainActivity : AppCompatActivity() {
             .unregisterReceiver(mBroadcastReceiver)
     }
 
+    // @TODO add internet check
     override fun onResume() {
         super.onResume()
         if (App.mRefreshStrategy.shouldRefresh(SpotifyClient::class.java))

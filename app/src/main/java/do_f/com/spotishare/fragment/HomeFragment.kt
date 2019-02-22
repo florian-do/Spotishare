@@ -12,6 +12,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.Navigation
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationRequest
@@ -19,6 +22,7 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse
 import do_f.com.spotishare.App
 import do_f.com.spotishare.MainActivity
 import do_f.com.spotishare.R
+import do_f.com.spotishare.Utils
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.databinding.FragmentHomeBinding
 import do_f.com.spotishare.model.Queue
@@ -42,9 +46,11 @@ class HomeFragment : BFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         master.setOnClickListener {
-            val arg = Bundle()
-            arg.putString(MasterFragment.ARG_PARAM1, "HEY HO HEY")
-            Navigation.findNavController(it).navigate(R.id.masterFragment, arg)
+//            val arg = Bundle()
+//            arg.putString(MasterFragment.ARG_PARAM1, "HEY HO HEY")
+//            Navigation.findNavController(it).navigate(R.id.masterFragment, arg)
+            App.firebaseDb.child(Utils.generateRoomNumber()).setValue("create")
+            App.firebaseDb.child(Utils.generateRoomNumber()).push().setValue("push create")
         }
 
         slave.setOnClickListener {
@@ -52,10 +58,21 @@ class HomeFragment : BFragment() {
         }
 
         cover_placeholder.setOnClickListener {
+
+            App.firebaseDb.child(Utils.generateRoomNumber()).addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onCancelled(p0: DatabaseError) {
+                    Log.e(TAG, "error: ", p0.toException())
+                }
+
+                override fun onDataChange(p0: DataSnapshot) {
+
+                }
+
+            })
+
             App.firebaseDb
                 .child(MainActivity.queueSize.toString())
-                .setValue(Queue("spotify:song:1Yfe3NJlioHys7jwHdfVm", "Hier", "Lomepal", true))
-//            App.firebaseDb.setValue(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Beau la folie", "Lomepal", true))
+                .setValue(Queue("spotify:song:1Yfe3NJlioHys7jwHdfVm", "temp", "Lomepal", true))
         }
     }
 
