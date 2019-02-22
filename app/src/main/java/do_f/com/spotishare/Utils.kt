@@ -4,9 +4,11 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.support.v7.graphics.Palette
 import java.util.*
+import kotlin.random.Random
 
 class Utils {
     companion object {
+
         // https://gist.github.com/KKorvin/219555d4d3ee1828d7b0e808aad82930
         fun getDominantColor(bitmap: Bitmap): Int {
             val swatchesTemp = Palette.from(bitmap).generate().swatches
@@ -30,6 +32,13 @@ class Utils {
                 Math.min(g, 255),
                 Math.min(b, 255)
             )
+        }
+
+        fun generateRoomNumber() : String {
+            val charPool : List<Char> = ('A'..'Z') + ('0'..'9')
+            return (1..4).map { i -> Random.nextInt(0, charPool.size) }
+                .map(charPool::get)
+                .joinToString("")
         }
     }
 }
