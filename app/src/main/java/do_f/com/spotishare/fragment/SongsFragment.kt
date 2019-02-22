@@ -96,6 +96,7 @@ class SongsFragment : BFragment() {
                     it?.let { data ->
                         adapter.setData(data.songs)
                         binding.loading = false
+                        dataSuccessfullyLoad(main)
                         if (swipe.isRefreshing)
                             swipe.isRefreshing = false
                     }
@@ -113,6 +114,7 @@ class SongsFragment : BFragment() {
                     it?.let { data ->
                         adapter.setData(data.songs)
                         binding.loading = false
+                        dataSuccessfullyLoad(main)
                         if (swipe.isRefreshing)
                             swipe.isRefreshing = false
                     }
@@ -141,7 +143,6 @@ class SongsFragment : BFragment() {
                              target: Target<Bitmap>?, dataSource: DataSource?,
                              isFirstResource: Boolean): Boolean {
                     setBackground(resource!!)
-                    dataSuccessfullyLoad(main)
                     return false
                 }
             }).into(image_header)
