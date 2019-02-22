@@ -4,6 +4,7 @@ import android.databinding.DataBindingUtil
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
@@ -11,16 +12,14 @@ import do_f.com.spotishare.R
 import do_f.com.spotishare.api.model.Image
 import do_f.com.spotishare.api.model.Item
 import do_f.com.spotishare.api.model.SearchResponse
+import do_f.com.spotishare.databases.entities.Type
 import do_f.com.spotishare.databinding.AdapterSearchBinding
 
-class SearchAdapter(val glide: RequestManager, val listener: (song : Item) -> Unit) : RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
+class SearchAdapter(val glide: RequestManager, val listener: (song : Item, view : View) -> Unit) : RecyclerView.Adapter<SearchAdapter.ViewHolder>() {
 
     var items : List<Item> = emptyList()
 
     companion object {
-        private const val TYPE_ARTIST = "artist"
-        private const val TYPE_TRACK = "track"
-        private const val TYPE_PLAYLIST = "playlist"
         private const val TAG = "SearchAdapter"
     }
 
@@ -45,38 +44,48 @@ class SearchAdapter(val glide: RequestManager, val listener: (song : Item) -> Un
         val data : Item = items[p1]
 
         holder.binding.root.setOnClickListener {
-            listener.invoke(data)
+            listener.invoke(data, it)
         }
 
         when(data.type) {
-            TYPE_ARTIST -> {
+            Type.ALBUM.type -> {
+                if (data.images.isNotEmpty()) {
+                    glide.load(getImageUrl(data.images).url)
+                        .into(holder.binding.cover)
+                }
+
+                holder.binding.type.text = Type.ALBUM.type.capitalize()
+                holder.binding.label.text = data.name
+            }
+
+            Type.ARTIST.type -> {
                 if (data.images.isNotEmpty()) {
                     glide.load(getImageUrl(data.images).url)
                         .apply(RequestOptions.circleCropTransform())
                         .into(holder.binding.cover)
                 }
 
-                holder.binding.type.text = TYPE_ARTIST.capitalize()
+                holder.binding.type.text = Type.ARTIST.type.capitalize()
                 holder.binding.label.text = data.name
             }
 
-            TYPE_PLAYLIST -> {
+            Type.PLAYLIST.type -> {
                 if (data.images.isNotEmpty()) {
                     glide.load(data.images[0].url)
                         .into(holder.binding.cover)
                 }
 
-                holder.binding.type.text = TYPE_PLAYLIST.capitalize()
+                holder.binding.type.text = Type.PLAYLIST.type.capitalize()
                 holder.binding.label.text = data.name
             }
 
-            TYPE_TRACK -> {
+            Type.TRACK.type -> {
                 if (data.album.images.isNotEmpty()) {
                     glide.load(getImageUrl(data.album.images).url)
                         .into(holder.binding.cover)
                 }
 
-                var artistsName = ""
+                val artistsName: String
                 if (data.artists.size > 1) {
                     val tmp : MutableList<String> = mutableListOf()
                     data.artists.forEach {
@@ -84,7 +93,6 @@ class SearchAdapter(val glide: RequestManager, val listener: (song : Item) -> Un
                     }
 
                     artistsName = tmp.joinToString(", ")
-
                 } else {
                     artistsName = data.artists[0].name
                 }
