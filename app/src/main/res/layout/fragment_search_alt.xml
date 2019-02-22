@@ -148,6 +148,7 @@
         android:id="@+id/loading"
         android:layout_width="100dp"
         android:layout_height="100dp"
+        android:visibility="gone"
         android:indeterminateTint="@color/green_spotify"
         style="?android:attr/progressBarStyleLarge"
         app:layout_constraintStart_toStartOf="parent"
