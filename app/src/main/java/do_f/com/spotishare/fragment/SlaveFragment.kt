@@ -2,6 +2,8 @@ package do_f.com.spotishare.fragment
 
 import android.arch.lifecycle.Observer
 import android.content.Context
+import android.databinding.DataBindingUtil
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.*
 import android.util.Log
@@ -25,6 +27,7 @@ import do_f.com.spotishare.adapters.PlaylistsAdapter
 import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.databases.entities.Playlists
+import do_f.com.spotishare.databinding.FragmentSlaveBinding
 
 class SlaveFragment : BFragment() {
 
@@ -33,8 +36,11 @@ class SlaveFragment : BFragment() {
     private var param1: String? = null
     private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
+    private var gd : GradientDrawable? = null
+    private var backgroundColor : Int = 0
+
     private lateinit var adapter : PlaylistsAdapter
-    private var lastPosition : Int = 0
+    private lateinit var binding : FragmentSlaveBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,14 +57,19 @@ class SlaveFragment : BFragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_slave, container, false)
+        binding = DataBindingUtil.inflate(
+            inflater,
+            R.layout.fragment_slave,
+            container,
+            false
+        )
+        backgroundColor = resources.getColor(R.color.background)
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         initPlaylistFeed()
-        initSpotifyData()
 
         search_bar.setOnClickListener {
             mHandler.removeCallbacksAndMessages(null)
@@ -67,6 +78,7 @@ class SlaveFragment : BFragment() {
     }
 
     private fun initPlaylistFeed() {
+        binding.loading = true
         adapter = PlaylistsAdapter(Glide.with(this), listener = { it: Playlists, view: View ->
             val arg = Bundle()
             arg.putString(SongsFragment.ARG_ID, it.id)
@@ -84,14 +96,16 @@ class SlaveFragment : BFragment() {
         rvPlaylist.isNestedScrollingEnabled = false
 
         repo.getPlaylists().observe(this, Observer {
-            Log.d(TAG, "trigger")
             if (it == null) {
                 repo.refresh()
             } else {
                 it.apply {
                     adapter.items = this
                     adapter.notifyDataSetChanged()
-                    dataSuccessfullyLoad(main)
+                    binding.loading = false
+                    getMainActivity()?.getCurrentAlbumBitmap()?.let {
+                        changeBackground(it)
+                    }
                 }
 
                 repo.refresh()
@@ -100,32 +114,35 @@ class SlaveFragment : BFragment() {
     }
 
     override fun refreshSpotifyAppRemote() {
-        initSpotifyData()
+
     }
 
+    fun changeBackground(bitmap : Bitmap) {
+        val domColor = Utils.manipulateColor(Utils.getDominantColor(bitmap), 0.8F)
+        val colors = intArrayOf(domColor, backgroundColor, backgroundColor)
 
-    private fun initSpotifyData() {
-        // Change background color from album image
-        getSpotifyAppRemote().apply {
-            playerApi.subscribeToPlayerState().setEventCallback {
-                imagesApi.getImage(it.track.imageUri).setResultCallback {
-                    val domColor = Utils.manipulateColor(Utils.getDominantColor(it), 0.8F)
-                    val backgroundColor = resources.getColor(R.color.background)
-                    val colors = intArrayOf(domColor, backgroundColor, backgroundColor)
+        gd = GradientDrawable(
+            GradientDrawable.Orientation.TL_BR, colors
+        )
 
-                    val gd = GradientDrawable(
-                        GradientDrawable.Orientation.TL_BR, colors
-                    )
+        main.background = gd
+    }
 
-                    mHandler.post {
-                        if (main != null) {
-//                            main.background = gd
-                            val transition = TransitionDrawable(arrayOf(main.background, gd))
-                            transition.isCrossFadeEnabled = true
-                            main.background = transition
-                            transition.startTransition(500)
-                        }
-                    }
+    fun updateBackground(bitmap : Bitmap) {
+        AsyncTask.execute {
+            val domColor = Utils.manipulateColor(Utils.getDominantColor(bitmap), 0.8F)
+            val colors = intArrayOf(domColor, backgroundColor, backgroundColor)
+
+            gd = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR, colors
+            )
+
+            mHandler.post {
+                if (main != null) {
+                    val transition = TransitionDrawable(arrayOf(main.background, gd))
+                    transition.isCrossFadeEnabled = true
+                    main.background = transition
+                    transition.startTransition(500)
                 }
             }
         }
