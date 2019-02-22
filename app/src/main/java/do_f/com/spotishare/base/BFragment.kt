@@ -19,6 +19,8 @@ abstract class BFragment : Fragment() {
         return (activity as MainActivity).getSpotifyAppRemote()!!
     }
 
+    fun getMainActivity() : MainActivity? = (activity as MainActivity)
+
     fun dataSuccessfullyLoad(v: View) {
         v.animate().alpha(1F).setDuration(400L).setStartDelay(100L).start()
     }
