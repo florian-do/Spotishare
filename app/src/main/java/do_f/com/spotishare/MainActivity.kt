@@ -8,11 +8,13 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
+import android.view.View
 import androidx.navigation.findNavController
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.firebase.database.*
@@ -25,6 +27,7 @@ import com.spotify.protocol.types.PlayerState
 import com.spotify.sdk.android.authentication.AuthenticationRequest
 import do_f.com.spotishare.api.SpotifyClient
 import do_f.com.spotishare.base.BFragment
+import do_f.com.spotishare.dialogfragment.QueueFragment
 import do_f.com.spotishare.fragment.HomeFragment
 import do_f.com.spotishare.fragment.DiscoverFragment
 import do_f.com.spotishare.model.Queue
@@ -48,7 +51,6 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
     private val mHandler = Handler(Looper.getMainLooper())
     private var mFCMToken = "";
     private var currentAlbumImage : Bitmap? = null
-
 
     private val mBroadcastReceiver : BroadcastReceiver = object  : BroadcastReceiver() {
         override fun onReceive(c: Context?, intent: Intent?) {
@@ -107,10 +109,7 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
     }
 
     private val valueEventListener = object : ValueEventListener {
-        override fun onCancelled(p0: DatabaseError) {
-
-        }
-
+        override fun onCancelled(p0: DatabaseError) { }
         override fun onDataChange(p0: DataSnapshot) {
             Log.d(TAG, "onDataChange: ${queueSize} | ${p0.childrenCount}")
             queueSize = p0.childrenCount
@@ -120,6 +119,9 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        window.statusBarColor = Color.argb(0, 0, 0, 0)
 
         if (App.roomCode.isNotEmpty()) {
             findNavController(R.id.nav_host_fragment).navigate(R.id.discoverFragment)
@@ -143,6 +145,11 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
             }
 
             mFCMToken = it.result?.token!!
+        }
+
+        arrow_up.setOnClickListener {
+            val f : QueueFragment = QueueFragment.newInstance()
+            f.show(supportFragmentManager, null)
         }
     }
 
