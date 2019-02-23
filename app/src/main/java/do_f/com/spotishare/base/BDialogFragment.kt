@@ -1,7 +1,9 @@
 package do_f.com.spotishare.base
 
+import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
+import android.view.View
 import android.view.ViewGroup
 
 import do_f.com.spotishare.R
@@ -21,7 +23,8 @@ open class BDialogFragment : DialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setStyle(STYLE_NO_FRAME, android.R.style.ThemeOverlay_Material_Dark);
+        //Theme_Holo_Light
+        setStyle(STYLE_NO_FRAME, android.R.style.Theme_Material_NoActionBar_TranslucentDecor)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
