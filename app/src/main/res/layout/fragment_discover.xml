@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:animateLayoutChanges="true"
-            tools:context=".fragment.SlaveFragment">
+            tools:context=".fragment.DiscoverFragment">
 
             <TextView
                 android:layout_width="wrap_content"
