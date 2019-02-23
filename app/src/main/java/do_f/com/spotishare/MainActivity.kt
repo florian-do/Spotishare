@@ -13,6 +13,7 @@ import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
+import androidx.navigation.findNavController
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.firebase.database.*
 import com.google.firebase.iid.FirebaseInstanceId
@@ -30,7 +31,7 @@ import do_f.com.spotishare.model.Queue
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionListener {
 
     companion object {
         private val TAG = "MainActivity";
@@ -40,7 +41,6 @@ class MainActivity : AppCompatActivity() {
         val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
         val FCM_INTENT_FILTER = "fcm_service_intent_filter"
         var queueSize : Long = 0
-        var roomCode : String = ""
     }
 
     private var mCountDownTimer : CountDownTimer? = null
@@ -112,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onDataChange(p0: DataSnapshot) {
+            Log.d(TAG, "onDataChange: ${queueSize} | ${p0.childrenCount}")
             queueSize = p0.childrenCount
         }
     }
@@ -120,18 +121,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val database = App.firebaseDb
-        val tmp : MutableList<Queue> = mutableListOf()
-        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Hier", "Lomepal", true))
-        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Ojd", "Lomepal", true))
-        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "demain", "Lomepal", true))
-        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Beonoj", "Lomepal", true))
-        tmp.add(Queue("spotify:song:1Yfe3ONJlioHys7jwHdfVm", "Bonjour", "Lomepal", true))
-        database.setValue(tmp)
-//        database.addChildEventListener(childEventListener)
-        database.addListenerForSingleValueEvent(valueEventListener)
-        database.addValueEventListener(valueEventListener)
-        // [END read_message]
+        if (App.roomCode.isNotEmpty()) {
+            findNavController(R.id.nav_host_fragment).navigate(R.id.discoverFragment)
+        }
 
 //        FirebaseMessaging.getInstance().subscribeToTopic("weather")
 //            .addOnCompleteListener { task ->
@@ -150,12 +142,7 @@ class MainActivity : AppCompatActivity() {
                 return@addOnCompleteListener
             }
 
-            // Get new Instance ID token
-            val token = it.result?.token
-
-            // Log and toast
-            mFCMToken = token!!
-//            Toast.makeText(baseContext, token, Toast.LENGTH_SHORT).show()
+            mFCMToken = it.result?.token!!
         }
     }
 
@@ -166,7 +153,6 @@ class MainActivity : AppCompatActivity() {
             val response = AuthenticationClient.getResponse(resultCode, intent)
 
             when (response.type) {
-                // Response was successful and contains auth token
                 AuthenticationResponse.Type.TOKEN -> {
                     App.mRefreshStrategy.refresh(SpotifyClient::class.java)
                     PreferenceManager
@@ -183,7 +169,6 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, " ${response.state}")
                 }
 
-                // Auth flow returned an error
                 AuthenticationResponse.Type.ERROR -> {
                     Log.d(TAG, ": AuthenticationResponse.Type.ERROR")
                 }
@@ -205,17 +190,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun initQueue() {
+        val database = App.firebaseDb.child(App.roomCode)
+        database.addListenerForSingleValueEvent(valueEventListener)
+        database.addValueEventListener(valueEventListener)
+    }
+
     private fun launchTrackProgression(position : Long, songDuration : Long) {
         if (mCountDownTimer != null) {
             mCountDownTimer!!.cancel()
         }
 
         mCountDownTimer = object : CountDownTimer(songDuration - position, 500) {
+            var tmp = false
             override fun onFinish() {
 
             }
 
             override fun onTick(p0: Long) {
+                Log.d(TAG, "cdt: $p0 / $tmp")
+
+                if (p0 < 5000) {
+                    if (mSpotifyAppRemote != null && !tmp) {
+                        Log.d(TAG, "add")
+                        mSpotifyAppRemote?.playerApi?.queue("spotify:track:6sG00oroR1oYJiPwRxZkA5")
+                        tmp = true
+                    }
+                    Log.d(TAG, "ENQUEUE MUSIC")
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     song_progression.setProgress(songDuration.toInt() - p0.toInt(), false)
                 } else {
@@ -223,12 +225,22 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        mCountDownTimer!!.start();
+        mCountDownTimer!!.start()
     }
 
     private fun spotifyAppRemoteConnect() {
         mSpotifyAppRemote?.apply {
+            motionStateApi.subscribeToMotionState().setEventCallback {
+                Log.d(TAG, "motionStateApi: ${it.state}")
+            }
+            playerApi.subscribeToPlayerContext().setEventCallback {
+                Log.d(TAG, "${it.subtitle} | ${it.title} | ${it.type} | ${it.uri}")
+            }
+
             playerApi.subscribeToPlayerState().setEventCallback {
+//                if (!it.track.name.equals("Le lendemain de l'orage"))
+//                    playerApi.play("spotify:track:6sG00oroR1oYJiPwRxZkA5")
+
                 initPlayer(this, it)
 
                 val track = it.track

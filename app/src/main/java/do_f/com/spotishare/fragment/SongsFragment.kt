@@ -18,6 +18,7 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import do_f.com.spotishare.App
+import do_f.com.spotishare.MainActivity
 import do_f.com.spotishare.R
 import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.SongAdapter
@@ -26,6 +27,7 @@ import do_f.com.spotishare.databases.entities.Album
 import do_f.com.spotishare.databases.entities.Playlist
 import do_f.com.spotishare.databases.entities.Type
 import do_f.com.spotishare.databinding.FragmentSongsBinding
+import do_f.com.spotishare.model.Queue
 import do_f.com.spotishare.viewmodel.SongsViewModel
 import kotlinx.android.synthetic.main.fragment_songs.*
 
@@ -70,6 +72,13 @@ class SongsFragment : BFragment() {
         super.onActivityCreated(savedInstanceState)
         vm.name.set(name)
         changeBackground(url)
+
+        adapter.setListener {
+            val data = Queue(it.uri, it.song_name, it.artist_name, it.explicit)
+            App.firebaseDb
+                .child(App.roomCode)
+                .push().setValue(data)
+        }
 
         rvFeed.adapter = adapter
         rvFeed.setHasFixedSize(true)
