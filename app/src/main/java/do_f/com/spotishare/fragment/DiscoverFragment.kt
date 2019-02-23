@@ -14,7 +14,7 @@ import android.view.ViewGroup
 import kotlinx.coroutines.*
 
 import do_f.com.spotishare.R
-import kotlinx.android.synthetic.main.fragment_slave.*
+import kotlinx.android.synthetic.main.fragment_discover.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import android.graphics.drawable.GradientDrawable
@@ -22,14 +22,15 @@ import android.graphics.drawable.TransitionDrawable
 import android.support.v7.widget.GridLayoutManager
 import androidx.navigation.Navigation
 import com.bumptech.glide.Glide
+import do_f.com.spotishare.MainActivity
 import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.PlaylistsAdapter
 import do_f.com.spotishare.api.repository.PlaylistsRepo
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.databases.entities.Playlists
-import do_f.com.spotishare.databinding.FragmentSlaveBinding
+import do_f.com.spotishare.databinding.FragmentDiscoverBinding
 
-class SlaveFragment : BFragment() {
+class DiscoverFragment : BFragment() {
 
     private val mHandler = Handler(Looper.getMainLooper())
 
@@ -40,7 +41,7 @@ class SlaveFragment : BFragment() {
     private var backgroundColor : Int = 0
 
     private lateinit var adapter : PlaylistsAdapter
-    private lateinit var binding : FragmentSlaveBinding
+    private lateinit var binding : FragmentDiscoverBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,10 +60,11 @@ class SlaveFragment : BFragment() {
         savedInstanceState: Bundle?): View? {
         binding = DataBindingUtil.inflate(
             inflater,
-            R.layout.fragment_slave,
+            R.layout.fragment_discover,
             container,
             false
         )
+
         backgroundColor = resources.getColor(R.color.background)
         return binding.root
     }
@@ -192,7 +194,7 @@ class SlaveFragment : BFragment() {
     }
 
     companion object {
-        val TAG = "SlaveFragment"
+        val TAG = "DiscoverFragment"
         private const val ARG_PARAM1 = "param1"
         private const val ARG_PARAM2 = "param2"
     }
