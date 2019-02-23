@@ -64,7 +64,7 @@ class DiscoverFragment : BFragment() {
             container,
             false
         )
-        binding.textView2.text = MainActivity.roomCode
+
         backgroundColor = resources.getColor(R.color.background)
         return binding.root
     }
