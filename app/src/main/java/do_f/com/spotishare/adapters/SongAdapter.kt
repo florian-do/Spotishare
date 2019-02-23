@@ -12,6 +12,7 @@ import do_f.com.spotishare.databinding.AdapterSongBinding
 class SongAdapter : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
 
     private var items = emptyList<Row>()
+    private var mCallback : ((Row) -> Unit?)? = null
 
     override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ViewHolder {
         val binding : AdapterSongBinding = DataBindingUtil.inflate(
@@ -28,6 +29,10 @@ class SongAdapter : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
         return items.size
     }
 
+    fun setListener(callback: (data: Row) -> Unit) {
+        mCallback = callback
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, p1: Int) {
         items[p1].let {
             holder.binding.songName.text = it.song_name
@@ -36,6 +41,10 @@ class SongAdapter : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
                 .resources
                 .getString(R.string.artist_album, it.artist_name, it.album_name)
             holder.binding.explicit = it.explicit
+
+            holder.binding.root.setOnClickListener { view ->
+                mCallback?.invoke(it)
+            }
         }
     }
 
@@ -43,7 +52,6 @@ class SongAdapter : RecyclerView.Adapter<SongAdapter.ViewHolder>() {
         items = _items
         notifyDataSetChanged()
     }
-
 
     class ViewHolder(val binding : AdapterSongBinding) : RecyclerView.ViewHolder(binding.root)
 }
