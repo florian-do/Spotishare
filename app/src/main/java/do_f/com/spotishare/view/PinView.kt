@@ -34,7 +34,7 @@ class PinView : EditText {
 
     fun init(c: Context?, attrs: AttributeSet?) {
         setBackgroundResource(0)
-        color = resources.getColor(R.color.green_spotify)
+        color = resources.getColor(R.color.background)
         val multi = c?.resources?.displayMetrics?.density
         mSpace = multi?.times(mSpace) ?: 24F
         mLineSpacing = multi?.times(mLineSpacing) ?: 8F
@@ -62,11 +62,14 @@ class PinView : EditText {
         val bottom : Float = (height - paddingBottom).toFloat()
         val paint : Paint = getPaint()
         paint.color = color
+        paint.strokeWidth = 6F
 
         //Text
         val textLength = text.length
         val textWidths = FloatArray(textLength)
-        paint.getTextWidths(text, 0, textLength, textWidths)
+        val paintText : Paint = getPaint()
+        paintText.getTextWidths(text, 0, textLength, textWidths)
+        paintText.color = color
 
         for (i in 0 until mNumChars) {
             canvas?.drawLine(startX, bottom, (startX + mCharSize), bottom, paint)
@@ -76,7 +79,7 @@ class PinView : EditText {
                 canvas?.drawText(text, i, i + 1,
                     middle - textWidths[0] / 2,
                     bottom - mLineSpacing,
-                    paint)
+                    paintText)
             }
 
             if (mSpace < 0) {
