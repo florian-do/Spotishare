@@ -59,4 +59,6 @@ class RoomFragment : BDialogFragment() {
             }
         }
     }
+
+    override fun getStatusBarColor(): Int = R.color.green_spotify
 }
