@@ -210,14 +210,14 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
             override fun onTick(p0: Long) {
                 Log.d(TAG, "cdt: $p0 / $tmp")
 
-                if (p0 < 5000) {
-                    if (mSpotifyAppRemote != null && !tmp) {
-                        Log.d(TAG, "add")
-                        mSpotifyAppRemote?.playerApi?.queue("spotify:track:6sG00oroR1oYJiPwRxZkA5")
-                        tmp = true
-                    }
-                    Log.d(TAG, "ENQUEUE MUSIC")
-                }
+//                if (p0 < 5000) {
+//                    if (mSpotifyAppRemote != null && !tmp) {
+//                        Log.d(TAG, "add")
+//                        mSpotifyAppRemote?.playerApi?.queue("spotify:track:6sG00oroR1oYJiPwRxZkA5")
+//                        tmp = true
+//                    }
+//                    Log.d(TAG, "ENQUEUE MUSIC")
+//                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     song_progression.setProgress(songDuration.toInt() - p0.toInt(), false)
                 } else {
