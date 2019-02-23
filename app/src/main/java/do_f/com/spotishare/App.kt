@@ -15,6 +15,7 @@ class App : Application() {
         lateinit var firebaseDb : DatabaseReference
         lateinit var mRefreshStrategy : RefreshStrategy
         lateinit var cacheDb : CacheDb
+        var roomCode : String = ""
         var mSpotifyClient = SpotifyClient()
         var retrofit: Retrofit = Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
