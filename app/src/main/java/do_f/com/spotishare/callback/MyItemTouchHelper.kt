@@ -43,6 +43,6 @@ class MyItemTouchHelper(val adapter: QueueAdapter) : ItemTouchHelper.Callback() 
     }
 
     override fun isLongPressDragEnabled(): Boolean {
-        return true
+        return false
     }
 }
