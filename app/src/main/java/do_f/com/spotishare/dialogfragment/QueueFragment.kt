@@ -19,6 +19,7 @@ import kotlinx.android.synthetic.main.fragment_queue.*
 
 class QueueFragment : BDialogFragment() {
 
+    private var selectCount = 0
     private val adapter : QueueAdapter = QueueAdapter()
     private val valueEventListener = object : ValueEventListener {
         override fun onCancelled(p0: DatabaseError) {}
@@ -80,12 +81,26 @@ class QueueFragment : BDialogFragment() {
         rvFeed.setHasFixedSize(true)
         rvFeed.layoutManager = LinearLayoutManager(context!!)
         rvFeed.adapter = adapter
+        adapter.setCheckedListener {
+            when (it) {
+                true -> selectCount++
+                false -> selectCount--
+            }
+
+            if (selectCount > 0)
+                selection_menu.visibility = View.VISIBLE
+            else
+                selection_menu.visibility = View.GONE
+        }
 
         val callback : ItemTouchHelper.Callback = MyItemTouchHelper(adapter)
         val touchHelper = ItemTouchHelper(callback)
         touchHelper.attachToRecyclerView(rvFeed)
 
         close.setOnClickListener { dismiss() }
+        remove_selection.setOnClickListener {
+            adapter.removeSelectItem()
+        }
     }
 
     companion object {

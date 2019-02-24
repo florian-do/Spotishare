@@ -8,7 +8,10 @@ data class Queue(
     var song: String = "",
     var artist: String = "",
     var explicit: Boolean = false,
-    var key: String = ""
+    @Exclude
+    var key: String = "",
+    @Exclude
+    var selection: Boolean = false
 ) {
 
     @Exclude
