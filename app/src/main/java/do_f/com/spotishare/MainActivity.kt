@@ -8,13 +8,11 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
-import android.view.View
 import androidx.navigation.findNavController
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.firebase.database.*
@@ -120,10 +118,12 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        window.statusBarColor = Color.argb(0, 0, 0, 0)
+//        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+////        window.statusBarColor = Color.argb(0, 0, 0, 0)
+//        window.statusBarColor = ContextCompat.getColor(applicationContext, R.color.statusBarColor)
 
-        if (App.roomCode.isNotEmpty()) {
+        if (App.session.isConnected()) {
+            initQueue()
             findNavController(R.id.nav_host_fragment).navigate(R.id.discoverFragment)
         }
 
@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
             mFCMToken = it.result?.token!!
         }
 
-        arrow_up.setOnClickListener {
+        queue.setOnClickListener {
             val f : QueueFragment = QueueFragment.newInstance()
             f.show(supportFragmentManager, null)
         }
@@ -198,6 +198,7 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
     }
 
     override fun initQueue() {
+        Log.d(TAG, "initQueue : ${App.roomCode}")
         val database = App.firebaseDb.child(App.roomCode)
         database.addListenerForSingleValueEvent(valueEventListener)
         database.addValueEventListener(valueEventListener)
@@ -279,7 +280,9 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
 
     override fun onStart() {
         super.onStart()
-        connectToSpotify()
+        if (SpotifyAppRemote.isSpotifyInstalled(this)) {
+            connectToSpotify()
+        }
 
         // Register LocalBroadcast
         LocalBroadcastManager
@@ -296,7 +299,9 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
             override fun onFailure(p0: Throwable?) {
                 Log.e(TAG, "error ", p0)
-                connectToSpotify()
+                Handler().postDelayed({
+                    connectToSpotify()
+                }, 60 * 1000)
             }
 
             override fun onConnected(p0: SpotifyAppRemote?) {
