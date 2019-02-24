@@ -22,6 +22,7 @@ import android.graphics.drawable.TransitionDrawable
 import android.support.v7.widget.GridLayoutManager
 import androidx.navigation.Navigation
 import com.bumptech.glide.Glide
+import do_f.com.spotishare.App
 import do_f.com.spotishare.MainActivity
 import do_f.com.spotishare.Utils
 import do_f.com.spotishare.adapters.PlaylistsAdapter
@@ -73,6 +74,7 @@ class DiscoverFragment : BFragment() {
         super.onActivityCreated(savedInstanceState)
         initPlaylistFeed()
 
+        textView2.text = App.roomCode
         search_bar.setOnClickListener {
             mHandler.removeCallbacksAndMessages(null)
             Navigation.findNavController(it).navigate(R.id.searchFragment)
