@@ -5,6 +5,7 @@ import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.CompoundButton
 import do_f.com.spotishare.App
 import do_f.com.spotishare.R
 import do_f.com.spotishare.databinding.AdapterQueueBinding
@@ -15,6 +16,7 @@ class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
 
     var items : MutableList<Queue> = mutableListOf()
     val TAG = "QueueAdapter"
+    private var callback : ((isSelected: Boolean) -> Unit)? = null
 
     override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ViewHolder {
         val binding : AdapterQueueBinding = DataBindingUtil.inflate(
@@ -50,24 +52,18 @@ class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
         }
     }
 
+    fun removeSelectItem() {
+        for (i in 0 until items.size - 1) {
+            if (items[i].selection) {
+                items.removeAt(i)
+                notifyItemRemoved(i)
+            }
+        }
+    }
+
     fun onItemMove(from: Int, to: Int) {
         Collections.swap(items, from, to)
         notifyItemMoved(from, to)
-
-        val qFrom : Queue = items[from]
-        val qTo : Queue = items[to]
-        val childUpdates = HashMap<String, Any>()
-        val keyFrom = qFrom.key
-        val keyTo = qTo.key
-        val roomCode = App.roomCode
-
-        Log.d(TAG, "$from : $roomCode/$keyFrom -> ${qTo.song}")
-        Log.d(TAG, "$to : $roomCode/$keyTo -> ${qFrom.song}")
-
-        //@TODO gerer l'update de queue avec une variable de position stocker en bdd
-        childUpdates["$roomCode/$keyFrom"] = qTo
-        childUpdates["$roomCode/$keyTo"] = qFrom
-        App.firebaseDb.updateChildren(childUpdates)
     }
 
     fun onReleaseItemMove(from: Int, to: Int) {
@@ -93,7 +89,17 @@ class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
             holder.binding.songName.text = it.song
             holder.binding.songArtistAlbum.text = it.artist
             holder.binding.explicit = it.explicit
+            holder.binding.selection.isChecked = it.selection
         }
+
+        holder.binding.selection.setOnCheckedChangeListener { _, b ->
+            items[p1].selection = b
+            callback?.invoke(b)
+        }
+    }
+
+    fun setCheckedListener(_call : (s: Boolean) -> Unit) {
+        callback = _call
     }
 
     class ViewHolder(val binding : AdapterQueueBinding) : RecyclerView.ViewHolder(binding.root)
