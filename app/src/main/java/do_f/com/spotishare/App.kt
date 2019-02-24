@@ -12,20 +12,24 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class App : Application() {
     companion object {
+        lateinit var session : Session
         lateinit var firebaseDb : DatabaseReference
         lateinit var mRefreshStrategy : RefreshStrategy
         lateinit var cacheDb : CacheDb
-        var roomCode : String = ""
         var mSpotifyClient = SpotifyClient()
         var retrofit: Retrofit = Retrofit.Builder()
             .addConverterFactory(GsonConverterFactory.create())
             .baseUrl(SpotifyClient.HOSTNAME)
             .client(mSpotifyClient.get())
             .build()
+
+        val roomCode: String
+            get() = session.getRoomCode()
     }
 
     override fun onCreate() {
         super.onCreate()
+        session = Session(applicationContext)
         firebaseDb = FirebaseDatabase.getInstance().reference
         mRefreshStrategy = RefreshStrategy(applicationContext)
         cacheDb = Room.databaseBuilder(applicationContext, CacheDb::class.java, CacheDb.DB_NAME)
