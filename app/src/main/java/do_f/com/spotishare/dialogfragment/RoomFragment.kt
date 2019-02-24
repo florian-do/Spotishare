@@ -2,6 +2,7 @@ package do_f.com.spotishare.dialogfragment
 
 import android.app.Activity.RESULT_OK
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.support.design.widget.Snackbar
@@ -46,8 +47,9 @@ class RoomFragment : BDialogFragment() {
                         override fun onCancelled(p0: DatabaseError) {}
                         override fun onDataChange(p0: DataSnapshot) {
                             if (p0.childrenCount > 0) {
-                                App.roomCode = pin.text.toString()
-                                targetFragment?.onActivityResult(targetRequestCode, RESULT_OK, activity?.intent)
+                                val intent : Intent = Intent()
+                                intent.putExtra("roomcode", pin.text.toString())
+                                targetFragment?.onActivityResult(targetRequestCode, RESULT_OK, intent)
                                 dismiss()
                             } else {
                                 Snackbar.make(view!!, "There is no room associate with this code", Toast.LENGTH_SHORT).show()
