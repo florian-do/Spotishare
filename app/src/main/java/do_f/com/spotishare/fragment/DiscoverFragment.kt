@@ -75,6 +75,10 @@ class DiscoverFragment : BFragment() {
         initPlaylistFeed()
 
         textView2.text = App.roomCode
+        textView2.setOnClickListener {
+            App.session.clear()
+            Navigation.findNavController(it).navigate(R.id.homeFragment)
+        }
         search_bar.setOnClickListener {
             mHandler.removeCallbacksAndMessages(null)
             Navigation.findNavController(it).navigate(R.id.searchFragment)
