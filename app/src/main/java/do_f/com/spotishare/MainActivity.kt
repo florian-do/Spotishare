@@ -1,18 +1,17 @@
 package do_f.com.spotishare
 
-import android.content.BroadcastReceiver
-import android.content.Context
+import android.content.*
 import android.support.v7.app.AppCompatActivity
 import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationResponse
-import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.os.*
 import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
+import android.support.v7.app.AlertDialog
 import android.util.Log
+import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.firebase.database.*
@@ -31,6 +30,12 @@ import do_f.com.spotishare.fragment.DiscoverFragment
 import do_f.com.spotishare.model.Queue
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
+import android.content.Intent
+import android.databinding.DataBindingUtil
+import android.net.Uri
+import com.spotify.protocol.types.ImageUri
+import com.spotify.protocol.types.Track
+import do_f.com.spotishare.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionListener {
 
@@ -41,102 +46,46 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         val REDIRECT_URI = "http://lapusheen.chat/callback"
         val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
         val FCM_INTENT_FILTER = "fcm_service_intent_filter"
-        var queueSize : Long = 0
+        var isSpotifyInstalled : Boolean = false
     }
 
+    private lateinit var binding : ActivityMainBinding
     private var mCountDownTimer : CountDownTimer? = null
     private var mSpotifyAppRemote : SpotifyAppRemote? = null
     private val mHandler = Handler(Looper.getMainLooper())
-    private var mFCMToken = "";
     private var currentAlbumImage : Bitmap? = null
+    private var currentTrack : Track? = null
+    private var currentPosition : Long = 0L
+    private var currentPauseState : Boolean? = null
 
-    private val mBroadcastReceiver : BroadcastReceiver = object  : BroadcastReceiver() {
+    private val mBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, intent: Intent?) {
 
         }
     }
-
-    private val childEventListener = object : ChildEventListener {
-        override fun onChildAdded(dataSnapshot: DataSnapshot, previousChildName: String?) {
-            // A new comment has been added, add it to the displayed list
-
-            try {
-                val comment: Queue? = dataSnapshot.getValue(Queue::class.java)
-            } catch(e : DatabaseException)  {
-
-            }
-
-            // ...
-        }
-
-        override fun onChildChanged(dataSnapshot: DataSnapshot, previousChildName: String?) {
-            Log.d(TAG, "onChildChanged: ${dataSnapshot.key}")
-
-            // A comment has changed, use the key to determine if we are displaying this
-            // comment and if so displayed the changed comment.
-            val newComment: Queue? = dataSnapshot.getValue(Queue::class.java)
-            val commentKey = dataSnapshot.key
-
-            // ...
-        }
-
-        override fun onChildRemoved(dataSnapshot: DataSnapshot) {
-            Log.d(TAG, "onChildRemoved:" + dataSnapshot.key!!)
-
-            // A comment has changed, use the key to determine if we are displaying this
-            // comment and if so remove it.
-            val commentKey = dataSnapshot.key
-
-            // ...
-        }
-
-        override fun onChildMoved(dataSnapshot: DataSnapshot, previousChildName: String?) {
-            Log.d(TAG, "onChildMoved:" + dataSnapshot.key!!)
-
-            // A comment has changed position, use the key to determine if we are
-            // displaying this comment and if so move it.
-            val movedComment = dataSnapshot.getValue(Queue::class.java)
-            val commentKey = dataSnapshot.key
-
-            // ...
-        }
-
-        override fun onCancelled(databaseError: DatabaseError) {
-            Log.w(TAG, "postComments:onCancelled", databaseError.toException())
-        }
-    }
-
     private val valueEventListener = object : ValueEventListener {
         override fun onCancelled(p0: DatabaseError) { }
         override fun onDataChange(p0: DataSnapshot) {
-            Log.d(TAG, "onDataChange: ${queueSize} | ${p0.childrenCount}")
-            queueSize = p0.childrenCount
+            if (p0.childrenCount == 0L) {
+                App.session.clear()
+            }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
 //        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-////        window.statusBarColor = Color.argb(0, 0, 0, 0)
+//        window.statusBarColor = Color.argb(0, 0, 0, 0)
 //        window.statusBarColor = ContextCompat.getColor(applicationContext, R.color.statusBarColor)
 
         if (App.session.isConnected()) {
             initQueue()
-            findNavController(R.id.nav_host_fragment).navigate(R.id.discoverFragment)
+        } else {
+            findNavController(R.id.nav_host_fragment).navigate(R.id.homeFragment)
         }
-
-//        FirebaseMessaging.getInstance().subscribeToTopic("weather")
-//            .addOnCompleteListener { task ->
-//                var msg = "OK"
-//                if (!task.isSuccessful) {
-//                    msg = "fail";
-//                }
-//
-//                Log.d(TAG, msg)
-//                Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-//        }
 
         FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
             if (!it.isSuccessful) {
@@ -144,42 +93,12 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
                 return@addOnCompleteListener
             }
 
-            mFCMToken = it.result?.token!!
+//            mFCMToken = it.result?.token!!
         }
 
         queue.setOnClickListener {
             val f : QueueFragment = QueueFragment.newInstance()
             f.show(supportFragmentManager, null)
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
-        super.onActivityResult(requestCode, resultCode, intent)
-
-        if (requestCode == MainActivity.REQUEST_CODE) {
-            val response = AuthenticationClient.getResponse(resultCode, intent)
-
-            when (response.type) {
-                AuthenticationResponse.Type.TOKEN -> {
-                    App.mRefreshStrategy.refresh(SpotifyClient::class.java)
-                    PreferenceManager
-                        .getDefaultSharedPreferences(applicationContext)
-                        .edit()
-                        .putString(SpotifyClient.SP_TOKEN, response.accessToken)
-                        .apply()
-
-                    App.mSpotifyClient.mAccessToken = response.accessToken
-
-                    Log.d(TAG, " ${response.accessToken}")
-                    Log.d(TAG, " ${response.code}")
-                    Log.d(TAG, " ${response.expiresIn}")
-                    Log.d(TAG, " ${response.state}")
-                }
-
-                AuthenticationResponse.Type.ERROR -> {
-                    Log.d(TAG, ": AuthenticationResponse.Type.ERROR")
-                }
-            }
         }
     }
 
@@ -192,40 +111,69 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
                 song_progression.progress = it.playbackPosition.toInt()
             }
 
-            if (!it.isPaused)
+            // @TODO ne fonctionne pas si on revient en arriere
+
+            Log.d(TAG, "play : ${isPlaying(it.isPaused)}")
+            Log.d(TAG, "seekTO : ${isSeekTo(it.playbackPosition, it.track.duration - currentPosition)}")
+            Log.d(TAG, "nextSong : ${!compareTrack(currentTrack, it.track)}")
+
+            if (isPlaying(it.isPaused)
+                || isSeekTo(it.playbackPosition, it.track.duration - currentPosition)
+                || !compareTrack(currentTrack, it.track)) {
                 launchTrackProgression(it.playbackPosition, it.track.duration)
+            } else if (it.isPaused)
+                mCountDownTimer?.cancel()
         }
     }
 
     override fun initQueue() {
-        Log.d(TAG, "initQueue : ${App.roomCode}")
         val database = App.firebaseDb.child(App.roomCode)
         database.addListenerForSingleValueEvent(valueEventListener)
-        database.addValueEventListener(valueEventListener)
+    }
+
+    var tmp = false
+
+    private fun addToTheQueue() {
+        App.firebaseDb.child(App.roomCode).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onCancelled(p0: DatabaseError) {
+
+            }
+
+            override fun onDataChange(p0: DataSnapshot) {
+                val next : Queue? = p0.children.first().getValue(Queue::class.java)
+                next?.let {
+//                    mSpotifyAppRemote?.playerApi?.queue(it.uri)
+//                    App.firebaseDb.child(App.roomCode).child(it.key).removeValue()
+                    Log.d(TAG, "NEXT WILL BE :${it.key} -> ${it.artist} • ${it.song}")
+                }
+//                Log.d(TAG, "NEXT WILL BE :${p0.key!!} | ${next.key!!}")
+            }
+        })
     }
 
     private fun launchTrackProgression(position : Long, songDuration : Long) {
         if (mCountDownTimer != null) {
+            Log.d(TAG, "launchTrackProgression: cancel")
             mCountDownTimer!!.cancel()
+            tmp = false
         }
 
         mCountDownTimer = object : CountDownTimer(songDuration - position, 500) {
-            var tmp = false
             override fun onFinish() {
-
+                Log.d(TAG, "onFinish")
             }
 
             override fun onTick(p0: Long) {
+                currentPosition = p0
                 Log.d(TAG, "cdt: $p0 / $tmp")
 
-//                if (p0 < 5000) {
-//                    if (mSpotifyAppRemote != null && !tmp) {
-//                        Log.d(TAG, "add")
-//                        mSpotifyAppRemote?.playerApi?.queue("spotify:track:6sG00oroR1oYJiPwRxZkA5")
-//                        tmp = true
-//                    }
-//                    Log.d(TAG, "ENQUEUE MUSIC")
-//                }
+                if (p0 < 5000) {
+                    if (mSpotifyAppRemote != null && App.session.isConnected() && !tmp) {
+                        Log.d(TAG, "ADD TO THE QUEUE")
+                        addToTheQueue()
+                        tmp = true
+                    }
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     song_progression.setProgress(songDuration.toInt() - p0.toInt(), false)
                 } else {
@@ -233,6 +181,7 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
                 }
             }
         }
+        
         mCountDownTimer!!.start()
     }
 
@@ -246,27 +195,31 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
             }
 
             playerApi.subscribeToPlayerState().setEventCallback {
-//                if (!it.track.name.equals("Le lendemain de l'orage"))
-//                    playerApi.play("spotify:track:6sG00oroR1oYJiPwRxZkA5")
+                if (currentPauseState == null)
+                    currentPauseState = !it.isPaused
 
+                binding.isPaused = it.isPaused
                 initPlayer(this, it)
+                if (!compareAlbumCover(currentTrack?.imageUri ?: ImageUri(""), it.track.imageUri)) {
+                    val bmp = mSpotifyAppRemote?.imagesApi?.getImage(it.track.imageUri)
+                    bmp?.setResultCallback { bmp ->
+                        currentAlbumImage = bmp
+                        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+                        navHost?.let {
+                            it.childFragmentManager.primaryNavigationFragment?.let { f ->
+                                if (f is HomeFragment)
+                                    f.setImage(bmp)
 
-                val track = it.track
-                val bmp = mSpotifyAppRemote?.imagesApi?.getImage(track.imageUri)
-                bmp?.setResultCallback { bmp ->
-                    currentAlbumImage = bmp
-                    val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
-                    navHost?.let {
-                        it.childFragmentManager.primaryNavigationFragment?.let { f ->
-                            if (f is HomeFragment)
-                                f.setImage(bmp)
-
-                            if (f is DiscoverFragment)
-                                f.updateBackground(bmp)
+                                if (f is DiscoverFragment)
+                                    f.updateBackground(bmp)
+                            }
                         }
                     }
                 }
-                Log.d(TAG, " ${track.album.name}")
+
+                currentTrack = it.track
+                currentPauseState = it.isPaused
+                Log.d(TAG, " ${currentTrack?.album?.name} • ${currentTrack?.name}")
             }
         }
 
@@ -280,8 +233,27 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
 
     override fun onStart() {
         super.onStart()
-        if (SpotifyAppRemote.isSpotifyInstalled(this)) {
+        isSpotifyInstalled = SpotifyAppRemote.isSpotifyInstalled(this)
+        if (isSpotifyInstalled) {
             connectToSpotify()
+        } else {
+            val b : AlertDialog.Builder = AlertDialog.Builder(this, R.style.AppTheme_AlertDialog)
+            b.setMessage(R.string.install_spotify)
+            b.setPositiveButton(R.string.yes) { p0, p1 ->
+                val appPackageName = "com.spotify.music"
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$appPackageName")))
+                } catch (anfe: android.content.ActivityNotFoundException) {
+                    startActivity(
+                        Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
+                        )
+                    )
+                }
+
+            }
+            b.setNegativeButton(R.string.no, null)
+            b.show()
         }
 
         // Register LocalBroadcast
@@ -334,6 +306,8 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
                 .getString(SpotifyClient.SP_TOKEN, "")!!
             Log.d(TAG, "onResume: getToken from SP : ${App.mSpotifyClient.mAccessToken}")
         }
+
+        binding.isConnected = App.session.isConnected()
     }
 
     private fun refreshSpotifyToken() {
@@ -368,6 +342,50 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
                 .createScoped(Arrays.asList(MESSAGING_SCOPE))
             googleCredential.refreshToken()
             callback.invoke(googleCredential.getAccessToken())
+        }
+    }
+
+    private fun compareTrack(cTrack : Track?, new : Track) : Boolean {
+        if (cTrack == null)
+            return true
+        return (cTrack.name == new.name && cTrack.album.name == new.album.name)
+    }
+
+    private fun compareAlbumCover(current : ImageUri?, new : ImageUri) : Boolean = (current?.raw == new.raw)
+
+    private fun isPlaying(isPaused : Boolean) = ((currentPauseState != isPaused) && isPaused)
+
+    private fun isSeekTo(playbackPosition : Long, localPlaybackPosition : Long) : Boolean {
+        if (currentPosition == 0L)
+            return false
+        if (playbackPosition > localPlaybackPosition)
+            return ((playbackPosition - localPlaybackPosition) > 1000)
+        else
+            return ((localPlaybackPosition - playbackPosition) > 1000)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
+        super.onActivityResult(requestCode, resultCode, intent)
+
+        if (requestCode == MainActivity.REQUEST_CODE) {
+            val response = AuthenticationClient.getResponse(resultCode, intent)
+
+            when (response.type) {
+                AuthenticationResponse.Type.TOKEN -> {
+                    App.mRefreshStrategy.refresh(SpotifyClient::class.java)
+                    PreferenceManager
+                        .getDefaultSharedPreferences(applicationContext)
+                        .edit()
+                        .putString(SpotifyClient.SP_TOKEN, response.accessToken)
+                        .apply()
+
+                    App.mSpotifyClient.mAccessToken = response.accessToken
+                }
+
+                AuthenticationResponse.Type.ERROR -> {
+                    Log.d(TAG, ": AuthenticationResponse.Type.ERROR")
+                }
+            }
         }
     }
 }
