@@ -75,9 +75,11 @@ class SongsFragment : BFragment() {
 
         adapter.setListener {
             val data = Queue(it.uri, it.song_name, it.artist_name, it.explicit)
+            data.key = App.firebaseDb.child(App.roomCode).push().key!!
+            Log.d(TAG, "add from adapter : ${data.key}")
             App.firebaseDb
                 .child(App.roomCode)
-                .push().setValue(data)
+                .child(data.key).setValue(data)
         }
 
         rvFeed.adapter = adapter
