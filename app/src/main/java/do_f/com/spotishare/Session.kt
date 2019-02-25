@@ -25,7 +25,6 @@ class Session(c : Context) {
     }
 
     fun isConnected() : Boolean {
-        Log.d("SESSION", "${sp.getString(TYPE, "")!!.isNotEmpty()} | ${getRoomCode().isNotEmpty()} | ${(sp.getString(TYPE, "")!!.isNotEmpty()) && (getRoomCode().isNotEmpty())}")
         return (sp.getString(TYPE, "")!!.isNotEmpty()) && (getRoomCode().isNotEmpty())
     }
 

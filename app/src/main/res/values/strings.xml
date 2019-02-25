@@ -5,6 +5,11 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="remove">Remove</string>
 
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <string name="install_spotify">For a better experience you should install the Spotify App</string>
+
     <string name="home_create_room">Create</string>
     <string name="home_join_room">Join</string>
 
