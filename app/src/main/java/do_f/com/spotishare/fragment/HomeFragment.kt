@@ -41,8 +41,13 @@ class HomeFragment : BFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         master.setOnClickListener {
-            App.firebaseDb.child(App.roomCode).setValue("{size:1}")
-            initSession(SESSIONTYPE.MASTER, Utils.generateRoomNumber())
+            if (MainActivity.isSpotifyInstalled) {
+                val roomCode = Utils.generateRoomNumber()
+                App.firebaseDb.child(roomCode).setValue("{size:1}")
+                initSession(SESSIONTYPE.MASTER, roomCode)
+            } else {
+
+            }
         }
 
         slave.setOnClickListener {
@@ -75,7 +80,6 @@ class HomeFragment : BFragment() {
 
     private fun initSession(type : SESSIONTYPE, roomCode : String) {
         App.session.initSession(type, roomCode)
-        mListener?.initQueue()
         findNavController(this).navigate(R.id.discoverFragment,
             null,
             NavOptions.Builder().setPopUpTo(R.id.homeFragment, true).build())
