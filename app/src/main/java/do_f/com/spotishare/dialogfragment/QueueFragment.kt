@@ -15,6 +15,7 @@ import do_f.com.spotishare.adapters.QueueAdapter
 import do_f.com.spotishare.base.BDialogFragment
 import do_f.com.spotishare.callback.MyItemTouchHelper
 import do_f.com.spotishare.model.Queue
+import kotlinx.android.synthetic.main.adapter_queue.*
 import kotlinx.android.synthetic.main.fragment_queue.*
 
 class QueueFragment : BDialogFragment() {
@@ -100,6 +101,8 @@ class QueueFragment : BDialogFragment() {
         close.setOnClickListener { dismiss() }
         remove_selection.setOnClickListener {
             adapter.removeSelectItem()
+            selectCount = 0
+            selection_menu.visibility = View.GONE
         }
     }
 
