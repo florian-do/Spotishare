@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.CompoundButton
 import do_f.com.spotishare.App
+
 import do_f.com.spotishare.R
 import do_f.com.spotishare.databinding.AdapterQueueBinding
 import do_f.com.spotishare.model.Queue
@@ -53,12 +54,17 @@ class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
     }
 
     fun removeSelectItem() {
-        for (i in 0 until items.size - 1) {
-            if (items[i].selection) {
-                items.removeAt(i)
-                notifyItemRemoved(i)
+        var i = 0
+        val iterator = items.iterator()      // it will return iterator
+        while (iterator.hasNext()) {
+            val name = iterator.next()
+            if (name.selection) {
+                App.firebaseDb.child(App.roomCode).child(name.key).removeValue()
+                iterator.remove()
             }
+            i++
         }
+        notifyDataSetChanged()
     }
 
     fun onItemMove(from: Int, to: Int) {
@@ -86,15 +92,18 @@ class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
 
     override fun onBindViewHolder(holder: ViewHolder, p1: Int) {
         items[p1].let {
+            holder.binding.selection.setOnCheckedChangeListener(null)
+
             holder.binding.songName.text = it.song
             holder.binding.songArtistAlbum.text = it.artist
             holder.binding.explicit = it.explicit
             holder.binding.selection.isChecked = it.selection
-        }
-
-        holder.binding.selection.setOnCheckedChangeListener { _, b ->
-            items[p1].selection = b
-            callback?.invoke(b)
+            holder.binding.selection.setOnCheckedChangeListener { _, b ->
+                if (holder.adapterPosition < items.size) {
+                    items[holder.adapterPosition].selection = b
+                    callback?.invoke(b)
+                }
+            }
         }
     }
 
