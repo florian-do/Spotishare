@@ -46,7 +46,7 @@ class HomeFragment : BFragment() {
                 App.firebaseDb.child(roomCode).setValue("{size:1}")
                 initSession(SESSIONTYPE.MASTER, roomCode)
             } else {
-
+                //@TODO ajouter un dialog
             }
         }
 
@@ -80,6 +80,7 @@ class HomeFragment : BFragment() {
 
     private fun initSession(type : SESSIONTYPE, roomCode : String) {
         App.session.initSession(type, roomCode)
+        mListener?.updateUiAfterLogin()
         findNavController(this).navigate(R.id.discoverFragment,
             null,
             NavOptions.Builder().setPopUpTo(R.id.homeFragment, true).build())
@@ -108,6 +109,6 @@ class HomeFragment : BFragment() {
     }
 
     interface OnFragmentInteractionListener {
-        fun initQueue()
+        fun updateUiAfterLogin()
     }
 }
