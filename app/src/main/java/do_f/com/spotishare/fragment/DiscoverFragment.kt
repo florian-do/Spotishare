@@ -74,9 +74,13 @@ class DiscoverFragment : BFragment() {
         super.onActivityCreated(savedInstanceState)
         initPlaylistFeed()
 
-        textView2.text = App.roomCode
+        if (App.isMaster)
+            textView2.text = App.roomCode
+
         textView2.setOnClickListener {
+            mHandler.removeCallbacksAndMessages(null)
             App.session.clear()
+            listener?.updateUiAfterLogin()
             Navigation.findNavController(it).navigate(R.id.homeFragment)
         }
         search_bar.setOnClickListener {
@@ -196,7 +200,7 @@ class DiscoverFragment : BFragment() {
     }
 
     interface OnFragmentInteractionListener {
-        fun onFragmentInteraction(uri: Uri)
+        fun updateUiAfterLogin()
     }
 
     companion object {
