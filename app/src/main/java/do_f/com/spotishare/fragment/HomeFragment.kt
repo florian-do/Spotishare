@@ -43,7 +43,7 @@ class HomeFragment : BFragment() {
         master.setOnClickListener {
             if (MainActivity.isSpotifyInstalled) {
                 val roomCode = Utils.generateRoomNumber()
-                App.firebaseDb.child(roomCode).setValue("{size:1}")
+                App.firebaseDb.child(roomCode).child("size").setValue(1)
                 initSession(SESSIONTYPE.MASTER, roomCode)
             } else {
                 //@TODO ajouter un dialog
@@ -55,26 +55,13 @@ class HomeFragment : BFragment() {
             f.setTargetFragment(this, REQUEST_CODE)
             f.show(fragmentManager, null)
         }
-
-        cover.setOnClickListener {
-            App.firebaseDb.child("NZ29").addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(p0: DataSnapshot) {
-                    Log.d(TAG, "${p0.children.first().key}")
-                    App.firebaseDb.child("NZ29").child(p0.children.first().key!!).removeValue()
-                    p0.children.forEach {
-                        Log.d(TAG, "${it.key}")
-                    }
-                }
-
-                override fun onCancelled(p0: DatabaseError) { }
-            })
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             initSession(SESSIONTYPE.SLAVE, data?.getStringExtra("roomcode")!!)
+            mListener?.updateRoomSize(true)
         }
     }
 
@@ -110,5 +97,6 @@ class HomeFragment : BFragment() {
 
     interface OnFragmentInteractionListener {
         fun updateUiAfterLogin()
+        fun updateRoomSize(isLoggin: Boolean)
     }
 }
