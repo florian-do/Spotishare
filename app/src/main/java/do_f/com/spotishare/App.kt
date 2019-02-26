@@ -25,6 +25,12 @@ class App : Application() {
 
         val roomCode: String
             get() = session.getRoomCode()
+
+        val isMaster: Boolean
+            get() = session.isMaster()
+
+        val isSlave: Boolean
+            get() = session.isSlave()
     }
 
     override fun onCreate() {

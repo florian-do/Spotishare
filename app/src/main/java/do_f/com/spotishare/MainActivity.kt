@@ -32,11 +32,15 @@ import java.util.*
 import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.net.Uri
+import androidx.navigation.NavOptions
+import androidx.navigation.fragment.NavHostFragment
 import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.Track
 import do_f.com.spotishare.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionListener {
+class MainActivity : AppCompatActivity(),
+    HomeFragment.OnFragmentInteractionListener,
+    DiscoverFragment.OnFragmentInteractionListener {
 
     companion object {
         private val TAG = "MainActivity";
@@ -84,7 +88,9 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         if (App.session.isConnected()) {
             checkRoomExist()
         } else {
-            findNavController(R.id.nav_host_fragment).navigate(R.id.homeFragment)
+            findNavController(R.id.nav_host_fragment).navigate(R.id.homeFragment,
+                null,
+                NavOptions.Builder().setPopUpTo(R.id.discoverFragment, true).build())
         }
 
         FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
@@ -122,6 +128,22 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         binding.isConnected = App.session.isConnected()
     }
 
+    override fun updateRoomSize(isLoggin: Boolean) {
+        App.firebaseDb
+            .child(App.roomCode)
+            .child("size")
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onCancelled(p0: DatabaseError) { }
+
+                override fun onDataChange(p0: DataSnapshot) {
+                    Log.d(TAG, "${p0.key} -> ${p0.value}")
+                    var size : Long = p0.value as Long
+                    if (isLoggin) size++ else size--
+                    App.firebaseDb.child(App.roomCode).child("size").setValue(size)
+                }
+            })
+    }
+
     var tmp = false
 
     private fun addToTheQueue() {
@@ -156,12 +178,13 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
 
             override fun onTick(p0: Long) {
                 currentPosition = p0
-                Log.d(TAG, "cdt: $p0 / $tmp")
+//                Log.d(TAG, "cdt: $p0 / $tmp")
 
                 if (p0 < 5000) {
                     if (mSpotifyAppRemote != null && App.session.isConnected() && !tmp) {
                         Log.d(TAG, "ADD TO THE QUEUE")
-                        addToTheQueue()
+                        if (App.isMaster)
+                            addToTheQueue()
                         tmp = true
                     }
                 }
@@ -178,7 +201,7 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
 
     private fun initPlayer(spotifyAppRemote: SpotifyAppRemote, it: PlayerState) {
         spotifyAppRemote.apply {
-            currentSong.text = it.track.name+" • "+it.track.artist.name
+            currentSong.text = resources.getString(R.string.artist_album, it.track.name, it.track.artist.name)
 
             mHandler.post {
                 song_progression.max = it.track.duration.toInt()
@@ -304,9 +327,10 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
     override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop!")
-        if (App.session.getDeviceType() == SESSIONTYPE.SLAVE) {
+        if (App.isSlave) {
             SpotifyAppRemote.disconnect(mSpotifyAppRemote)
             mSpotifyAppRemote = null
+            updateRoomSize(false)
         }
 
         // unregister LocalBroadcast
