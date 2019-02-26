@@ -11,7 +11,6 @@ import android.preference.PreferenceManager
 import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AlertDialog
 import android.util.Log
-import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.firebase.database.*
@@ -53,6 +52,7 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
     private var mCountDownTimer : CountDownTimer? = null
     private var mSpotifyAppRemote : SpotifyAppRemote? = null
     private val mHandler = Handler(Looper.getMainLooper())
+
     private var currentAlbumImage : Bitmap? = null
     private var currentTrack : Track? = null
     private var currentPosition : Long = 0L
@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
 //        window.statusBarColor = ContextCompat.getColor(applicationContext, R.color.statusBarColor)
 
         if (App.session.isConnected()) {
-            initQueue()
+            checkRoomExist()
         } else {
             findNavController(R.id.nav_host_fragment).navigate(R.id.homeFragment)
         }
@@ -100,53 +100,44 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
             val f : QueueFragment = QueueFragment.newInstance()
             f.show(supportFragmentManager, null)
         }
-    }
 
-    private fun initPlayer(spotifyAppRemote: SpotifyAppRemote, it: PlayerState) {
-        spotifyAppRemote.apply {
-            currentSong.text = it.track.name+" • "+it.track.artist.name
-
-            mHandler.post {
-                song_progression.max = it.track.duration.toInt()
-                song_progression.progress = it.playbackPosition.toInt()
+        play.setOnClickListener {
+            binding.isPaused?.let {isPaused ->
+                if (isPaused) {
+                    mSpotifyAppRemote?.playerApi?.resume()
+                } else {
+                    mSpotifyAppRemote?.playerApi?.pause()
+                }
+                binding.isPaused = !binding.isPaused!!
             }
-
-            // @TODO ne fonctionne pas si on revient en arriere
-
-            Log.d(TAG, "play : ${isPlaying(it.isPaused)}")
-            Log.d(TAG, "seekTO : ${isSeekTo(it.playbackPosition, it.track.duration - currentPosition)}")
-            Log.d(TAG, "nextSong : ${!compareTrack(currentTrack, it.track)}")
-
-            if (isPlaying(it.isPaused)
-                || isSeekTo(it.playbackPosition, it.track.duration - currentPosition)
-                || !compareTrack(currentTrack, it.track)) {
-                launchTrackProgression(it.playbackPosition, it.track.duration)
-            } else if (it.isPaused)
-                mCountDownTimer?.cancel()
         }
     }
 
-    override fun initQueue() {
+    private fun checkRoomExist() {
         val database = App.firebaseDb.child(App.roomCode)
         database.addListenerForSingleValueEvent(valueEventListener)
+    }
+
+    override fun updateUiAfterLogin() {
+        binding.isConnected = App.session.isConnected()
     }
 
     var tmp = false
 
     private fun addToTheQueue() {
         App.firebaseDb.child(App.roomCode).addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onCancelled(p0: DatabaseError) {
-
-            }
+            override fun onCancelled(p0: DatabaseError) { }
 
             override fun onDataChange(p0: DataSnapshot) {
-                val next : Queue? = p0.children.first().getValue(Queue::class.java)
-                next?.let {
-//                    mSpotifyAppRemote?.playerApi?.queue(it.uri)
-//                    App.firebaseDb.child(App.roomCode).child(it.key).removeValue()
-                    Log.d(TAG, "NEXT WILL BE :${it.key} -> ${it.artist} • ${it.song}")
-                }
-//                Log.d(TAG, "NEXT WILL BE :${p0.key!!} | ${next.key!!}")
+                try {
+                    p0.children.firstOrNull()
+                    val next : Queue? = p0.children.firstOrNull()?.getValue(Queue::class.java)
+                    next?.let {
+                        mSpotifyAppRemote?.playerApi?.queue(it.uri)
+                        App.firebaseDb.child(App.roomCode).child(it.key).removeValue()
+                        Log.d(TAG, "NEXT WILL BE :${it.key} -> ${it.artist} • ${it.song}")
+                    }
+                } catch (e : DatabaseException) { }
             }
         })
     }
@@ -185,11 +176,39 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         mCountDownTimer!!.start()
     }
 
+    private fun initPlayer(spotifyAppRemote: SpotifyAppRemote, it: PlayerState) {
+        spotifyAppRemote.apply {
+            currentSong.text = it.track.name+" • "+it.track.artist.name
+
+            mHandler.post {
+                song_progression.max = it.track.duration.toInt()
+                song_progression.progress = it.playbackPosition.toInt()
+            }
+
+            Log.d(TAG, "play : ${isPlaying(it.isPaused)}")
+            Log.d(TAG, "seekTO: ${it.playbackPosition} -> ${it.track.duration} - $currentPosition = ${it.track.duration - currentPosition}")
+            Log.d(TAG, "seekTO: ${it.playbackPosition} -> $currentPosition")
+            Log.d(TAG, "seekTO : ${isSeekTo(it.playbackPosition, currentPosition)}")
+            Log.d(TAG, "restart : ${isRestartingSong(it.playbackPosition, it.track)}")
+            Log.d(TAG, "Prev Or Next : ${isPrevOrNext(it.playbackPosition, it.track)}")
+
+            if (isPlaying(it.isPaused)
+                || (isSeekTo(it.playbackPosition, (it.track.duration - currentPosition)) && !it.isPaused)
+                || isPrevOrNext(it.playbackPosition, it.track)) {
+                launchTrackProgression(it.playbackPosition, it.track.duration)
+            } else if (it.isPaused) {
+                Log.d(TAG, "pause: true")
+                mCountDownTimer?.cancel()
+            }
+        }
+    }
+
     private fun spotifyAppRemoteConnect() {
         mSpotifyAppRemote?.apply {
             motionStateApi.subscribeToMotionState().setEventCallback {
                 Log.d(TAG, "motionStateApi: ${it.state}")
             }
+
             playerApi.subscribeToPlayerContext().setEventCallback {
                 Log.d(TAG, "${it.subtitle} | ${it.title} | ${it.type} | ${it.uri}")
             }
@@ -198,24 +217,17 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
                 if (currentPauseState == null)
                     currentPauseState = !it.isPaused
 
-                binding.isPaused = it.isPaused
-                initPlayer(this, it)
-                if (!compareAlbumCover(currentTrack?.imageUri ?: ImageUri(""), it.track.imageUri)) {
-                    val bmp = mSpotifyAppRemote?.imagesApi?.getImage(it.track.imageUri)
-                    bmp?.setResultCallback { bmp ->
-                        currentAlbumImage = bmp
-                        val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
-                        navHost?.let {
-                            it.childFragmentManager.primaryNavigationFragment?.let { f ->
-                                if (f is HomeFragment)
-                                    f.setImage(bmp)
+                if (currentPosition == 0L)
+                    currentPosition = it.playbackPosition
 
-                                if (f is DiscoverFragment)
-                                    f.updateBackground(bmp)
-                            }
-                        }
-                    }
+                binding.isPaused = it.isPaused
+
+                if (isPrevOrNext(it.playbackPosition, it.track)) {
+                    currentPauseState = !it.isPaused
                 }
+
+                initPlayer(this, it)
+                updateAlbumCover(it.track)
 
                 currentTrack = it.track
                 currentPauseState = it.isPaused
@@ -231,29 +243,34 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         }
     }
 
+    private fun updateAlbumCover(track: Track) {
+        if (!compareAlbumCover(currentTrack?.imageUri ?: ImageUri(""), track.imageUri)) {
+            val bmp = mSpotifyAppRemote?.imagesApi?.getImage(track.imageUri)
+            bmp?.setResultCallback { bmp ->
+                currentAlbumImage = bmp
+                val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+                navHost?.let {
+                    it.childFragmentManager.primaryNavigationFragment?.let { f ->
+                        if (f is HomeFragment)
+                            f.setImage(bmp)
+
+                        if (f is DiscoverFragment)
+                            f.updateBackground(bmp)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         isSpotifyInstalled = SpotifyAppRemote.isSpotifyInstalled(this)
         if (isSpotifyInstalled) {
+            if (mSpotifyAppRemote != null)
+                SpotifyAppRemote.disconnect(mSpotifyAppRemote)
             connectToSpotify()
         } else {
-            val b : AlertDialog.Builder = AlertDialog.Builder(this, R.style.AppTheme_AlertDialog)
-            b.setMessage(R.string.install_spotify)
-            b.setPositiveButton(R.string.yes) { p0, p1 ->
-                val appPackageName = "com.spotify.music"
-                try {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$appPackageName")))
-                } catch (anfe: android.content.ActivityNotFoundException) {
-                    startActivity(
-                        Intent(Intent.ACTION_VIEW,
-                            Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
-                        )
-                    )
-                }
-
-            }
-            b.setNegativeButton(R.string.no, null)
-            b.show()
+            installSpotifyDialog()
         }
 
         // Register LocalBroadcast
@@ -286,13 +303,25 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
 
     override fun onStop() {
         super.onStop()
-        SpotifyAppRemote.disconnect(mSpotifyAppRemote)
-        mSpotifyAppRemote = null
+        Log.d(TAG, "onStop!")
+        if (App.session.getDeviceType() == SESSIONTYPE.SLAVE) {
+            SpotifyAppRemote.disconnect(mSpotifyAppRemote)
+            mSpotifyAppRemote = null
+        }
 
         // unregister LocalBroadcast
         LocalBroadcastManager
             .getInstance(this)
             .unregisterReceiver(mBroadcastReceiver)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy: ")
+        if (App.session.getDeviceType() == SESSIONTYPE.MASTER) {
+            SpotifyAppRemote.disconnect(mSpotifyAppRemote)
+            mSpotifyAppRemote = null
+        }
     }
 
     // @TODO add internet check
@@ -329,6 +358,26 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
         window.setFormat(PixelFormat.RGBA_8888)
     }
 
+    private fun installSpotifyDialog() {
+        val b : AlertDialog.Builder = AlertDialog.Builder(this, R.style.AppTheme_AlertDialog)
+        b.setMessage(R.string.install_spotify)
+        b.setPositiveButton(R.string.yes) { _, _ ->
+            val appPackageName = "com.spotify.music"
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$appPackageName")))
+            } catch (anfe: android.content.ActivityNotFoundException) {
+                startActivity(
+                    Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://play.google.com/store/apps/details?id=$appPackageName")
+                    )
+                )
+            }
+
+        }
+        b.setNegativeButton(R.string.no, null)
+        b.show()
+    }
+
     fun getSpotifyAppRemote() : SpotifyAppRemote? {
         return mSpotifyAppRemote
     }
@@ -353,15 +402,18 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
 
     private fun compareAlbumCover(current : ImageUri?, new : ImageUri) : Boolean = (current?.raw == new.raw)
 
-    private fun isPlaying(isPaused : Boolean) = ((currentPauseState != isPaused) && isPaused)
+    private fun isPlaying(isPaused : Boolean) = ((currentPauseState != isPaused) && !isPaused)
+
+    private fun isRestartingSong(pos : Long, track: Track) : Boolean = (pos < 100 && compareTrack(currentTrack, track))
+
+    private fun isPrevOrNext(pos : Long, track: Track) : Boolean = (pos < 100 && !compareTrack(currentTrack, track))
 
     private fun isSeekTo(playbackPosition : Long, localPlaybackPosition : Long) : Boolean {
-        if (currentPosition == 0L)
-            return false
+        Log.d(TAG, "isSeekTo: $playbackPosition - $localPlaybackPosition = ${playbackPosition - localPlaybackPosition}")
         if (playbackPosition > localPlaybackPosition)
-            return ((playbackPosition - localPlaybackPosition) > 1000)
+            return ((playbackPosition - localPlaybackPosition) > 2000)
         else
-            return ((localPlaybackPosition - playbackPosition) > 1000)
+            return ((localPlaybackPosition - playbackPosition) > 2000)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
@@ -385,6 +437,8 @@ class MainActivity : AppCompatActivity(), HomeFragment.OnFragmentInteractionList
                 AuthenticationResponse.Type.ERROR -> {
                     Log.d(TAG, ": AuthenticationResponse.Type.ERROR")
                 }
+
+                else -> { }
             }
         }
     }
