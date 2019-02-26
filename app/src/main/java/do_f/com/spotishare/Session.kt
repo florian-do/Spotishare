@@ -28,6 +28,9 @@ class Session(c : Context) {
         return (sp.getString(TYPE, "")!!.isNotEmpty()) && (getRoomCode().isNotEmpty())
     }
 
+    fun isMaster() : Boolean = (getDeviceType() == SESSIONTYPE.MASTER)
+    fun isSlave() : Boolean = (getDeviceType() == SESSIONTYPE.SLAVE)
+
     fun clear() {
         sp.edit().putString(ROOM_CODE, "").apply()
         sp.edit().putString(TYPE, "").apply()
