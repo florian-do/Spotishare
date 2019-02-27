@@ -1,5 +1,6 @@
 package do_f.com.spotishare.dialogfragment
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.helper.ItemTouchHelper
@@ -7,39 +8,23 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.bumptech.glide.Glide
 import com.google.firebase.database.*
+import com.spotify.protocol.types.Track
 import do_f.com.spotishare.App
+import do_f.com.spotishare.MainActivity
 
 import do_f.com.spotishare.R
 import do_f.com.spotishare.adapters.QueueAdapter
 import do_f.com.spotishare.base.BDialogFragment
 import do_f.com.spotishare.callback.MyItemTouchHelper
 import do_f.com.spotishare.model.Queue
-import kotlinx.android.synthetic.main.adapter_queue.*
 import kotlinx.android.synthetic.main.fragment_queue.*
 
 class QueueFragment : BDialogFragment() {
 
     private var selectCount = 0
-    private val adapter : QueueAdapter = QueueAdapter()
-    private val valueEventListener = object : ValueEventListener {
-        override fun onCancelled(p0: DatabaseError) {}
-        override fun onDataChange(p0: DataSnapshot) {
-            val items : MutableList<Queue> = mutableListOf()
-            Log.d(TAG, "onDataChange: ${p0.key}")
-            p0.children.forEach {
-                try {
-                    Log.d(TAG, "onDataChange: ${it.key}")
-                    it.getValue(Queue::class.java)?.let { data ->
-                        items.add(data)
-                    }
-                } catch (e : DatabaseException) {
-                    Log.e(TAG, "", e)
-                }
-            }
-            adapter.initData(items)
-        }
-    }
+    private lateinit var adapter : QueueAdapter
     private val childEventListener = object : ChildEventListener {
         override fun onCancelled(p0: DatabaseError) {
 
@@ -76,8 +61,9 @@ class QueueFragment : BDialogFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         Log.d(TAG, ":${App.roomCode} ")
+        adapter = QueueAdapter(Glide.with(this))
+        initList()
         val database = App.firebaseDb.child(App.roomCode)
-
         database.addChildEventListener(childEventListener)
         rvFeed.setHasFixedSize(true)
         rvFeed.layoutManager = LinearLayoutManager(context!!)
@@ -104,6 +90,39 @@ class QueueFragment : BDialogFragment() {
             selectCount = 0
             selection_menu.visibility = View.GONE
         }
+    }
+
+    private fun initList() {
+        addTitle("Now Playing")
+        val track : Track? = (activity as MainActivity).getCurrentTrack()
+        val bmp = (activity as MainActivity).getCurrentAlbumBitmap()
+        track?.let {
+            val data = Queue()
+            data.bmp = bmp
+            data.itemViewType = QueueAdapter.TYPE_NOW
+            data.song = it.name
+            data.artist = it.artist.name
+            adapter.addItem(data)
+        }
+
+        addTitle("Queue :")
+    }
+
+    private fun addTitle(title: String) {
+        val nowPlaying = Queue()
+        nowPlaying.title = title
+        nowPlaying.itemViewType = QueueAdapter.TYPE_TITLE
+        adapter.addItem(nowPlaying)
+    }
+
+    fun updateNowPlaying(bmp: Bitmap?, track: Track) {
+        Log.d(TAG, "updateNowPlaying: ")
+        val data = Queue()
+        data.bmp = bmp
+        data.itemViewType = QueueAdapter.TYPE_NOW
+        data.song = track.name
+        data.artist = track.artist.name
+        adapter.updateNowPlaying(data)
     }
 
     companion object {
