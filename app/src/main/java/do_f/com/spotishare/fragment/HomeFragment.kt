@@ -15,10 +15,8 @@ import androidx.navigation.fragment.NavHostFragment.findNavController
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import do_f.com.spotishare.*
 
-import do_f.com.spotishare.App
-import do_f.com.spotishare.R
-import do_f.com.spotishare.Utils
 import do_f.com.spotishare.base.BFragment
 import do_f.com.spotishare.databinding.FragmentHomeBinding
 import do_f.com.spotishare.dialogfragment.RoomFragment
@@ -43,9 +41,13 @@ class HomeFragment : BFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         master.setOnClickListener {
-            App.roomCode = Utils.generateRoomNumber()
-            App.firebaseDb.child(App.roomCode).push().setValue("init")
-            initSession()
+            if (MainActivity.isSpotifyInstalled) {
+                val roomCode = Utils.generateRoomNumber()
+                App.firebaseDb.child(roomCode).child("size").setValue(1)
+                initSession(SESSIONTYPE.MASTER, roomCode)
+            } else {
+                //@TODO ajouter un dialog
+            }
         }
 
         slave.setOnClickListener {
@@ -53,31 +55,19 @@ class HomeFragment : BFragment() {
             f.setTargetFragment(this, REQUEST_CODE)
             f.show(fragmentManager, null)
         }
-
-        cover.setOnClickListener {
-            App.firebaseDb.child("NZ29").addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(p0: DataSnapshot) {
-                    Log.d(TAG, "${p0.children.first().key}")
-                    App.firebaseDb.child("NZ29").child(p0.children.first().key!!).removeValue()
-                    p0.children.forEach {
-                        Log.d(TAG, "${it.key}")
-                    }
-                }
-
-                override fun onCancelled(p0: DatabaseError) { }
-            })
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            initSession()
+            initSession(SESSIONTYPE.SLAVE, data?.getStringExtra("roomcode")!!)
+            mListener?.updateRoomSize(true)
         }
     }
 
-    private fun initSession() {
-        mListener?.initQueue()
+    private fun initSession(type : SESSIONTYPE, roomCode : String) {
+        App.session.initSession(type, roomCode)
+        mListener?.updateUiAfterLogin()
         findNavController(this).navigate(R.id.discoverFragment,
             null,
             NavOptions.Builder().setPopUpTo(R.id.homeFragment, true).build())
@@ -106,6 +96,7 @@ class HomeFragment : BFragment() {
     }
 
     interface OnFragmentInteractionListener {
-        fun initQueue()
+        fun updateUiAfterLogin()
+        fun updateRoomSize(isLoggin: Boolean)
     }
 }
