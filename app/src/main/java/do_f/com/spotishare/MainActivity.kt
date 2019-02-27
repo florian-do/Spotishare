@@ -43,9 +43,9 @@ class MainActivity : AppCompatActivity(),
 
     companion object {
         private val TAG = "MainActivity";
-        val CLIENT_ID = "3b3789933bb949b4946a8a34fd29fcbf";
+        val CLIENT_ID = BuildConfig.SPOTIFY_API_KEY
         val REQUEST_CODE = 1337
-        val REDIRECT_URI = "http://lapusheen.chat/callback"
+        val REDIRECT_URI = BuildConfig.SPOTIFY_CALLBACK
         val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
         val FCM_INTENT_FILTER = "fcm_service_intent_filter"
         var isSpotifyInstalled : Boolean = false
