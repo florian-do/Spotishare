@@ -4,29 +4,59 @@ import android.databinding.DataBindingUtil
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import android.widget.CompoundButton
+import com.bumptech.glide.RequestManager
 import do_f.com.spotishare.App
 
 import do_f.com.spotishare.R
 import do_f.com.spotishare.databinding.AdapterQueueBinding
+import do_f.com.spotishare.databinding.AdapterQueueNowBinding
+import do_f.com.spotishare.databinding.AdapterQueueTitleBinding
 import do_f.com.spotishare.model.Queue
 import java.util.*
 
-class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
+class QueueAdapter(val glide: RequestManager) : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
 
     var items : MutableList<Queue> = mutableListOf()
     val TAG = "QueueAdapter"
     private var callback : ((isSelected: Boolean) -> Unit)? = null
 
-    override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ViewHolder {
-        val binding : AdapterQueueBinding = DataBindingUtil.inflate(
-            LayoutInflater.from(p0.context),
-            R.layout.adapter_queue,
-            p0, false
-        )
+    companion object {
+        const val TYPE_QUEUE = 0
+        const val TYPE_TITLE = 1
+        const val TYPE_NOW = 2
+    }
 
-        return ViewHolder(binding)
+    override fun onCreateViewHolder(p0: ViewGroup, p1: Int): ViewHolder {
+        Log.d(TAG, "ItemViewType = $p1")
+
+        when (p1) {
+            TYPE_QUEUE -> {
+                val binding : AdapterQueueBinding = DataBindingUtil.inflate(
+                    LayoutInflater.from(p0.context), R.layout.adapter_queue, p0, false)
+                return QueueViewHolder(binding)
+            }
+            TYPE_TITLE ->  {
+                val binding : AdapterQueueTitleBinding = DataBindingUtil.inflate(
+                    LayoutInflater.from(p0.context), R.layout.adapter_queue_title, p0, false)
+                return TitleViewHolder(binding)
+            }
+            TYPE_NOW ->  {
+                val binding : AdapterQueueNowBinding = DataBindingUtil.inflate(
+                    LayoutInflater.from(p0.context), R.layout.adapter_queue_now, p0, false)
+                return NowViewHolder(binding)
+            }
+            else -> {
+                val binding : AdapterQueueBinding = DataBindingUtil.inflate(
+                    LayoutInflater.from(p0.context), R.layout.adapter_queue, p0, false)
+                return QueueViewHolder(binding)
+            }
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return items[position].itemViewType
     }
 
     override fun getItemCount(): Int = items.size
@@ -39,6 +69,11 @@ class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
     fun addItem(data : Queue) {
         items.add(data)
         notifyItemInserted(items.size)
+    }
+
+    fun updateNowPlaying(data: Queue) {
+        items[1] = data
+        notifyItemChanged(1)
     }
 
     fun removeItem(key: String) {
@@ -92,24 +127,45 @@ class QueueAdapter : RecyclerView.Adapter<QueueAdapter.ViewHolder>() {
 
     override fun onBindViewHolder(holder: ViewHolder, p1: Int) {
         items[p1].let {
-            holder.binding.selection.setOnCheckedChangeListener(null)
-
-            holder.binding.songName.text = it.song
-            holder.binding.songArtistAlbum.text = it.artist
-            holder.binding.explicit = it.explicit
-            holder.binding.selection.isChecked = it.selection
-            holder.binding.selection.setOnCheckedChangeListener { _, b ->
-                if (holder.adapterPosition < items.size) {
-                    items[holder.adapterPosition].selection = b
-                    callback?.invoke(b)
-                }
+            when (it.itemViewType) {
+                TYPE_QUEUE -> bindQueue(holder as QueueViewHolder, it)
+                TYPE_TITLE -> bindTitle(holder as TitleViewHolder, it)
+                TYPE_NOW -> bindNow(holder as NowViewHolder, it)
             }
         }
+    }
+
+    fun bindQueue(holder: QueueViewHolder, it: Queue) {
+        holder.binding.selection.setOnCheckedChangeListener(null)
+        holder.binding.songName.text = it.song
+        holder.binding.songArtistAlbum.text = it.artist
+        holder.binding.explicit = it.explicit
+        holder.binding.selection.isChecked = it.selection
+        holder.binding.selection.setOnCheckedChangeListener { _, b ->
+            if (holder.adapterPosition < items.size) {
+                items[holder.adapterPosition].selection = b
+                callback?.invoke(b)
+            }
+        }
+    }
+
+    fun bindNow(holder: NowViewHolder, it: Queue) {
+        glide.load(it.bmp).into(holder.binding.cover)
+        holder.binding.songName.text = it.song
+        holder.binding.songArtistAlbum.text = it.artist
+        holder.binding.explicit = it.explicit
+    }
+
+    fun bindTitle(holder: TitleViewHolder, it: Queue) {
+        holder.binding.title.text = it.title
     }
 
     fun setCheckedListener(_call : (s: Boolean) -> Unit) {
         callback = _call
     }
 
-    class ViewHolder(val binding : AdapterQueueBinding) : RecyclerView.ViewHolder(binding.root)
+    open class ViewHolder(val itemView : View) : RecyclerView.ViewHolder(itemView)
+    class NowViewHolder(val binding : AdapterQueueNowBinding) : ViewHolder(binding.root)
+    class QueueViewHolder(val binding : AdapterQueueBinding) : ViewHolder(binding.root)
+    class TitleViewHolder(val binding : AdapterQueueTitleBinding) : ViewHolder(binding.root)
 }
