@@ -2,4 +2,5 @@
 <resources>
     <dimen name="collapsible_app_bar_height">365dp</dimen>
     <dimen name="collapsible_toolbar_height">350dp</dimen>
+    <dimen name="statusBarHeight">24dp</dimen>
 </resources>
