@@ -17,7 +17,13 @@ android {
         enabled true
     }
     buildTypes {
+        debug {
+            buildConfigField 'String', "SPOTIFY_API_KEY", SPOTIFY_API_KEY
+            buildConfigField 'String', "SPOTIFY_CALLBACK", SPOTIFY_CALLBACK
+        }
         release {
+            buildConfigField 'String', "SPOTIFY_API_KEY", SPOTIFY_API_KEY
+            buildConfigField 'String', "SPOTIFY_CALLBACK", SPOTIFY_CALLBACK
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
