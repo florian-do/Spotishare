@@ -9,6 +9,7 @@ import android.widget.EditText
 import do_f.com.spotishare.R
 import android.graphics.RectF
 import android.view.ActionMode
+import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 
@@ -25,6 +26,8 @@ class PinView : EditText {
     var color = 0
 
     private val itemLineRect = RectF()
+
+    var mListener : OnKeyImeListener? = null
 
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) { init(context, attrs) }
@@ -88,5 +91,19 @@ class PinView : EditText {
                 startX += mCharSize + mSpace
             }
         }
+    }
+
+    override fun onKeyPreIme(keyCode: Int, event: KeyEvent?): Boolean {
+        if (mListener != null)
+            mListener?.onKeyIme(keyCode, event)
+        return super.onKeyPreIme(keyCode, event)
+    }
+
+    fun setKeyBackListener(listener : OnKeyImeListener) {
+        mListener = listener
+    }
+
+    interface OnKeyImeListener {
+        fun onKeyIme(keyCode: Int, event: KeyEvent?)
     }
 }
