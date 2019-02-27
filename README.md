@@ -3,6 +3,15 @@ A collaborative listening room using Spotify
 
 ![alt text](https://github.com/florian-do/Spotishare/blob/master/app/src/main/ic_launcher-web.png)
 
+## Getting Started
+
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+
+### Prerequisites
+
+Before building the project you NEED to add your Spotify APIKEY and CALLBACK to your `gradle.properties`
+You can follow those steps : [Hiding API keys from your Android repository](https://medium.com/code-better/hiding-api-keys-from-your-android-repository-b23f5598b906)
+
 ## Built With
 
 * [Kotlin](https://kotlinlang.org/) - 
