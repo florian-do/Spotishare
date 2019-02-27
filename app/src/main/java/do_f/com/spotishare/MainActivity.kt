@@ -455,13 +455,13 @@ class MainActivity : AppCompatActivity(),
     fun getCurrentTrack() : Track? = currentTrack
 
     private fun getAccessToken(callback : (String) -> Unit) {
-        AsyncTask.execute {
-            val googleCredential = GoogleCredential
-                .fromStream(resources.openRawResource(R.raw.service_account))
-                .createScoped(Arrays.asList(MESSAGING_SCOPE))
-            googleCredential.refreshToken()
-            callback.invoke(googleCredential.getAccessToken())
-        }
+//        AsyncTask.execute {
+//            val googleCredential = GoogleCredential
+//                .fromStream(resources.openRawResource(R.raw.service_account))
+//                .createScoped(Arrays.asList(MESSAGING_SCOPE))
+//            googleCredential.refreshToken()
+//            callback.invoke(googleCredential.getAccessToken())
+//        }
     }
 
     private fun compareTrack(cTrack : Track?, new : Track) : Boolean {
