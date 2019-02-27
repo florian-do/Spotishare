@@ -43,9 +43,9 @@ class MainActivity : AppCompatActivity(),
 
     companion object {
         private val TAG = "MainActivity";
-        val CLIENT_ID = "***REMOVED***";
+        val CLIENT_ID = BuildConfig.SPOTIFY_API_KEY
         val REQUEST_CODE = 1337
-        val REDIRECT_URI = "***REMOVED***"
+        val REDIRECT_URI = BuildConfig.SPOTIFY_CALLBACK
         val MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
         val FCM_INTENT_FILTER = "fcm_service_intent_filter"
         var isSpotifyInstalled : Boolean = false
@@ -457,7 +457,7 @@ class MainActivity : AppCompatActivity(),
     private fun getAccessToken(callback : (String) -> Unit) {
         AsyncTask.execute {
             val googleCredential = GoogleCredential
-                .fromStream(resources.openRawResource(R.raw.***REMOVED***))
+                .fromStream(resources.openRawResource(R.raw.service_account))
                 .createScoped(Arrays.asList(MESSAGING_SCOPE))
             googleCredential.refreshToken()
             callback.invoke(googleCredential.getAccessToken())
