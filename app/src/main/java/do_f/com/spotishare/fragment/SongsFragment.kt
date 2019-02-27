@@ -75,9 +75,11 @@ class SongsFragment : BFragment() {
 
         adapter.setListener {
             val data = Queue(it.uri, it.song_name, it.artist_name, it.explicit)
+            data.key = App.firebaseDb.child(App.roomCode).push().key!!
+            Log.d(TAG, "add from adapter : ${data.key}")
             App.firebaseDb
                 .child(App.roomCode)
-                .push().setValue(data)
+                .child(data.key).setValue(data)
         }
 
         rvFeed.adapter = adapter
@@ -105,7 +107,7 @@ class SongsFragment : BFragment() {
                     it?.let { data ->
                         adapter.setData(data.songs)
                         binding.loading = false
-                        dataSuccessfullyLoad(main)
+//                        dataSuccessfullyLoad(main)
                         if (swipe.isRefreshing)
                             swipe.isRefreshing = false
                     }
@@ -123,7 +125,7 @@ class SongsFragment : BFragment() {
                     it?.let { data ->
                         adapter.setData(data.songs)
                         binding.loading = false
-                        dataSuccessfullyLoad(main)
+//                        dataSuccessfullyLoad(main)
                         if (swipe.isRefreshing)
                             swipe.isRefreshing = false
                     }
@@ -152,6 +154,7 @@ class SongsFragment : BFragment() {
                              target: Target<Bitmap>?, dataSource: DataSource?,
                              isFirstResource: Boolean): Boolean {
                     setBackground(resource!!)
+                    dataSuccessfullyLoad(main)
                     return false
                 }
             }).into(image_header)
