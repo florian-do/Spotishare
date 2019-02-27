@@ -33,7 +33,6 @@ import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.net.Uri
 import androidx.navigation.NavOptions
-import androidx.navigation.fragment.NavHostFragment
 import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.Track
 import do_f.com.spotishare.databinding.ActivityMainBinding
@@ -61,6 +60,9 @@ class MainActivity : AppCompatActivity(),
     private var currentTrack : Track? = null
     private var currentPosition : Long = 0L
     private var currentPauseState : Boolean? = null
+    private var nextTrack : Queue? = null
+    private var isSkipping : Boolean = false
+    private var isAddingToQueue : Boolean = false
 
     private val mBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, intent: Intent?) {
@@ -72,8 +74,31 @@ class MainActivity : AppCompatActivity(),
         override fun onDataChange(p0: DataSnapshot) {
             if (p0.childrenCount == 0L) {
                 App.session.clear()
+                findNavController(R.id.nav_host_fragment).navigate(R.id.homeFragment,
+                    null,
+                    NavOptions.Builder().setPopUpTo(R.id.discoverFragment, true).build())
             }
         }
+    }
+
+    private val nextTrackEventListener = object : ValueEventListener {
+        override fun onCancelled(p0: DatabaseError) { }
+
+        override fun onDataChange(p0: DataSnapshot) {
+            Log.d(TAG, "nextTrackEvent : ")
+            if (p0.childrenCount > 0) {
+                try {
+                    nextTrack = p0.children.firstOrNull()?.getValue(Queue::class.java)
+                    nextTrack?.let {
+                        Log.d(TAG, "next track : ${it.song}")
+                    }
+                } catch (e: DatabaseException) {
+                    Log.d(TAG, "pas de next track")
+                    nextTrack = null
+                }
+            }
+        }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,6 +112,7 @@ class MainActivity : AppCompatActivity(),
 
         if (App.session.isConnected()) {
             checkRoomExist()
+            App.firebaseDb.child(App.roomCode).addValueEventListener(nextTrackEventListener)
         } else {
             findNavController(R.id.nav_host_fragment).navigate(R.id.homeFragment,
                 null,
@@ -104,7 +130,7 @@ class MainActivity : AppCompatActivity(),
 
         queue.setOnClickListener {
             val f : QueueFragment = QueueFragment.newInstance()
-            f.show(supportFragmentManager, null)
+            f.show(supportFragmentManager, QueueFragment.TAG)
         }
 
         play.setOnClickListener {
@@ -144,8 +170,6 @@ class MainActivity : AppCompatActivity(),
             })
     }
 
-    var tmp = false
-
     private fun addToTheQueue() {
         App.firebaseDb.child(App.roomCode).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onCancelled(p0: DatabaseError) { }
@@ -166,26 +190,27 @@ class MainActivity : AppCompatActivity(),
 
     private fun launchTrackProgression(position : Long, songDuration : Long) {
         if (mCountDownTimer != null) {
-            Log.d(TAG, "launchTrackProgression: cancel")
             mCountDownTimer!!.cancel()
-            tmp = false
+            Log.d(TAG, "reset isAddingToQueue")
+            isAddingToQueue = false
         }
 
         mCountDownTimer = object : CountDownTimer(songDuration - position, 500) {
-            override fun onFinish() {
-                Log.d(TAG, "onFinish")
-            }
-
+            override fun onFinish() { }
             override fun onTick(p0: Long) {
                 currentPosition = p0
-//                Log.d(TAG, "cdt: $p0 / $tmp")
+                if (isSkipping && (songDuration - p0) > 1500) {
+                    Log.d(TAG, "reset isSkipping")
+                    isSkipping = false
+                }
 
                 if (p0 < 5000) {
-                    if (mSpotifyAppRemote != null && App.session.isConnected() && !tmp) {
+                    if (mSpotifyAppRemote != null && App.session.isConnected() && !isAddingToQueue) {
                         Log.d(TAG, "ADD TO THE QUEUE")
                         if (App.isMaster)
                             addToTheQueue()
-                        tmp = true
+                        Log.d(TAG, "true isAddingToQueue")
+                        isAddingToQueue = true
                     }
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -208,12 +233,12 @@ class MainActivity : AppCompatActivity(),
                 song_progression.progress = it.playbackPosition.toInt()
             }
 
-            Log.d(TAG, "play : ${isPlaying(it.isPaused)}")
-            Log.d(TAG, "seekTO: ${it.playbackPosition} -> ${it.track.duration} - $currentPosition = ${it.track.duration - currentPosition}")
-            Log.d(TAG, "seekTO: ${it.playbackPosition} -> $currentPosition")
-            Log.d(TAG, "seekTO : ${isSeekTo(it.playbackPosition, currentPosition)}")
-            Log.d(TAG, "restart : ${isRestartingSong(it.playbackPosition, it.track)}")
-            Log.d(TAG, "Prev Or Next : ${isPrevOrNext(it.playbackPosition, it.track)}")
+//            Log.d(TAG, "play : ${isPlaying(it.isPaused)}")
+//            Log.d(TAG, "seekTO : ${it.playbackPosition} -> ${it.track.duration} - $currentPosition = ${it.track.duration - currentPosition}")
+//            Log.d(TAG, "seekTO : ${it.playbackPosition} -> $currentPosition")
+//            Log.d(TAG, "seekTO : ${isSeekTo(it.playbackPosition, currentPosition)}")
+//            Log.d(TAG, "restart : ${isRestartingSong(it.playbackPosition, it.track)}")
+//            Log.d(TAG, "Prev Or Next : ${isPrevOrNext(it.playbackPosition, it.track)}")
 
             if (isPlaying(it.isPaused)
                 || (isSeekTo(it.playbackPosition, (it.track.duration - currentPosition)) && !it.isPaused)
@@ -247,14 +272,27 @@ class MainActivity : AppCompatActivity(),
 
                 if (isPrevOrNext(it.playbackPosition, it.track)) {
                     currentPauseState = !it.isPaused
+
+                    Log.d(TAG, "$isAddingToQueue")
+                    if (App.isMaster && !isAddingToQueue) {
+                        nextTrack?.let { data ->
+                            if (!isSkipping) {
+                                Log.d(TAG, "NEXT TRACK : ${data.song}")
+                                playerApi.play(data.uri)
+                                App.firebaseDb.child(App.roomCode).child(data.key).removeValue()
+                                isSkipping = true
+                            }
+                        }
+                    }
                 }
+
 
                 initPlayer(this, it)
                 updateAlbumCover(it.track)
 
                 currentTrack = it.track
                 currentPauseState = it.isPaused
-                Log.d(TAG, " ${currentTrack?.album?.name} • ${currentTrack?.name}")
+                Log.d(TAG, "${currentTrack?.album?.name} • ${currentTrack?.name}")
             }
         }
 
@@ -281,6 +319,10 @@ class MainActivity : AppCompatActivity(),
                             f.updateBackground(bmp)
                     }
                 }
+
+                val f = supportFragmentManager.findFragmentByTag(QueueFragment.TAG)
+                if (f is QueueFragment)
+                    f.updateNowPlaying(currentAlbumImage, track)
             }
         }
     }
@@ -310,10 +352,12 @@ class MainActivity : AppCompatActivity(),
 
         SpotifyAppRemote.connect(this, connectionParams, object : Connector.ConnectionListener {
             override fun onFailure(p0: Throwable?) {
-                Log.e(TAG, "error ", p0)
-                Handler().postDelayed({
-                    connectToSpotify()
-                }, 60 * 1000)
+//                Log.e(TAG, "error ", p0.message)
+                // @TODO do something when {"message":"User is not logged in"}
+                Log.d(TAG, "${p0?.message}")
+//                Handler().postDelayed({
+//                    connectToSpotify()
+//                }, 60 * 1000)
             }
 
             override fun onConnected(p0: SpotifyAppRemote?) {
@@ -408,6 +452,8 @@ class MainActivity : AppCompatActivity(),
 
     fun getCurrentAlbumBitmap() : Bitmap? = currentAlbumImage
 
+    fun getCurrentTrack() : Track? = currentTrack
+
     private fun getAccessToken(callback : (String) -> Unit) {
         AsyncTask.execute {
             val googleCredential = GoogleCredential
@@ -428,12 +474,12 @@ class MainActivity : AppCompatActivity(),
 
     private fun isPlaying(isPaused : Boolean) = ((currentPauseState != isPaused) && !isPaused)
 
-    private fun isRestartingSong(pos : Long, track: Track) : Boolean = (pos < 100 && compareTrack(currentTrack, track))
+    private fun isRestartingSong(pos : Long, track: Track) : Boolean = (pos < 750 && compareTrack(currentTrack, track))
 
-    private fun isPrevOrNext(pos : Long, track: Track) : Boolean = (pos < 100 && !compareTrack(currentTrack, track))
+    private fun isPrevOrNext(pos : Long, track: Track) : Boolean = (pos < 750 && !compareTrack(currentTrack, track))
 
     private fun isSeekTo(playbackPosition : Long, localPlaybackPosition : Long) : Boolean {
-        Log.d(TAG, "isSeekTo: $playbackPosition - $localPlaybackPosition = ${playbackPosition - localPlaybackPosition}")
+//        Log.d(TAG, "isSeekTo: $playbackPosition - $localPlaybackPosition = ${playbackPosition - localPlaybackPosition}")
         if (playbackPosition > localPlaybackPosition)
             return ((playbackPosition - localPlaybackPosition) > 2000)
         else
