@@ -457,7 +457,7 @@ class MainActivity : AppCompatActivity(),
     private fun getAccessToken(callback : (String) -> Unit) {
         AsyncTask.execute {
             val googleCredential = GoogleCredential
-                .fromStream(resources.openRawResource(R.raw.service_account))
+                .fromStream(resources.openRawResource(R.raw.***REMOVED***))
                 .createScoped(Arrays.asList(MESSAGING_SCOPE))
             googleCredential.refreshToken()
             callback.invoke(googleCredential.getAccessToken())
