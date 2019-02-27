@@ -1,5 +1,6 @@
 package do_f.com.spotishare.model
 
+import android.graphics.Bitmap
 import com.google.firebase.database.Exclude
 import com.google.gson.annotations.SerializedName
 
@@ -9,11 +10,16 @@ data class Queue(
     var artist: String = "",
     var explicit: Boolean = false,
     @Exclude
-    var key: String = "",
+    var itemViewType: Int = 0,
     @Exclude
-    var selection: Boolean = false
+    var bmp: Bitmap? = null,
+    @Exclude
+    var title: String = "",
+    @Exclude
+    var selection: Boolean = false,
+    @Exclude
+    var key: String = ""
 ) {
-
     @Exclude
     fun toMap(): Map<String, Any?> {
         return mapOf(
