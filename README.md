@@ -12,6 +12,8 @@ These instructions will get you a copy of the project up and running on your loc
 Before building the project you NEED to add your Spotify APIKEY and CALLBACK to your `gradle.properties`
 You can follow those steps : [Hiding API keys from your Android repository](https://medium.com/code-better/hiding-api-keys-from-your-android-repository-b23f5598b906)
 
+You will need aswell a google-services.json for the Firebase Realtime Database
+
 ## Built With
 
 * [Kotlin](https://kotlinlang.org/) - 
